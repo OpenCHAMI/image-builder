@@ -20,10 +20,6 @@ RUN pip3.11 install ansible ansible-base ansible-bender boto3 dnspython requests
 COPY src/ /usr/local/bin/
 RUN chmod -R 0755 /usr/local/bin/
 
-RUN mkdir -p /tmp/dnf/log && \
-    mkdir /tmp/dnf/cache && \
-    mkdir /tmp/dnf/repos.d
-
 # Allow non-root to run buildah commands
 RUN setcap cap_setuid=ep "$(command -v newuidmap)" && \
     setcap cap_setgid=ep "$(command -v newgidmap)" &&\

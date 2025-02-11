@@ -37,15 +37,27 @@ class Layer:
         self.logger.info(f"Container: {cname} mounted at {mname}")
 
         if self.args['pkg_man'] == "zypper":
-            repo_dest = mname+"/etc/zypp/repos.d"
+            repo_dest = "/etc/zypp/repos.d"
         elif self.args['pkg_man'] == "dnf":
-            repo_dest = mname+"/etc/yum.repos.d"
+            repo_dest = "/etc/yum.repos.d"
         else:
             self.logger.error("unsupported package manager")
 
+        inst = None
+        try:
+            inst = installer.Installer(self.args['pkg_man'], cname, mname)
+        except Exception as e:
+            self.logger.error(f"Error preparing installer: {e}")
+            cmd(["buildah","rm"] + [cname])
+            sys.exit("Exiting now ...")
+        except KeyboardInterrupt:
+            self.logger.error(f"Keyboard Interrupt")
+            cmd(["buildah","rm"] + [cname])
+            sys.exit("Exiting now ...")
+
         # Install Repos
         try: 
-            installer.install_repos(mname, cname, repos, repo_dest, self.args['pkg_man'], self.args['proxy'])
+            inst.install_repos(repos, repo_dest, self.args['proxy'])
         except Exception as e:
             self.logger.error(f"Error installing repos: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -58,11 +70,11 @@ class Layer:
         # Install Packages
         try:
             # Base Package Groups
-            installer.install_base_package_groups(cname, package_groups, repo_dest, mname, self.args['pkg_man'], self.args['proxy'])
+            inst.install_base_package_groups(package_groups, repo_dest, self.args['proxy'])
             # Packages
-            installer.install_base_packages(cname, packages, repo_dest, mname, self.args['pkg_man'], self.args['proxy'])
+            inst.install_base_packages(packages, repo_dest, self.args['proxy'])
             # Remove Packages
-            installer.remove_base_packages(cname, remove_packages)
+            inst.remove_base_packages(remove_packages)
         except Exception as e:
             self.logger.error(f"Error installing packages: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -74,7 +86,7 @@ class Layer:
 
         # Copy Files
         try:
-            installer.install_base_copyfiles(cname, copyfiles)
+            inst.install_base_copyfiles(copyfiles)
         except Exception as e:
             self.logger.error(f"Error running commands: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -86,7 +98,7 @@ class Layer:
 
         # Run Commands
         try:
-            installer.install_base_commands(cname, commands)
+            inst.install_base_commands(commands)
             if os.path.islink(mname + '/etc/resolv.conf'):
                 self.logger.info("removing resolv.conf link (this link breaks running a container)")
                 os.unlink(mname + '/etc/resolv.conf')
