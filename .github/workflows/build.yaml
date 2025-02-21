@@ -48,4 +48,5 @@ jobs:
                 file: dockerfiles/dnf/Dockerfile
                 push: true
                 tags: |
-                  ghcr.io/openchami/image-build:latest
+                  ${{ startsWith(github.ref, 'refs/pull/') && 'ghcr.io/openchami/image-build:latest-prbuild' || 'ghcr.io/openchami/image-build:latest' }}
+                  ${{ startsWith(github.ref, 'refs/tags/') && 'ghcr.io/openchami/image-build:v' + steps.extract_version.outputs.version || '' }}
