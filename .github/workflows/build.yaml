@@ -49,7 +49,7 @@ jobs:
           elif [[ "${GITHUB_REF}" == refs/pull/* ]]; then
             TAG="ghcr.io/openchami/image-build:latest-prbuild"
           else
-            TAG=""
+            TAG="test"
           fi
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Computed tag: ${TAG}"
