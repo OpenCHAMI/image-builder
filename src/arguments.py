@@ -28,7 +28,7 @@ def process_args(terminal_args, config_options):
         processed_args['ansible_inv'] = terminal_args.inventory or config_options.get('inventory', [])
         processed_args['ansible_vars'] = terminal_args.inventory or config_options.get('vars', {})
 
-        verbosity_values = {0, 1, 2, 3, 4}
+        verbosity_values = list(range(0,5))
         if terminal_args.ansible_verbosity in verbosity_values:
             processed_args['ansible_verbosity'] = terminal_args.ansible_verbosity           
         else:

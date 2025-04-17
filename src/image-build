@@ -18,7 +18,7 @@ def main():
 
     # Main arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ansible-verbosity', dest="ansible_verbosity", default=0, required=False)
+    parser.add_argument('--ansible-verbosity', dest="ansible_verbosity", default=0, type=int, required=False)
     parser.add_argument('--log-level', dest="log_level", default=DEFAULT_LOGGING, required=False)
     parser.add_argument('--name', type=str)
     parser.add_argument('--parent', type=str)
