@@ -2,9 +2,47 @@ import subprocess
 import boto3
 import os
 import tempfile
+from datetime import datetime
 # local imports
 from utils import cmd, get_os
 import logging
+
+def _generate_labels(args):
+    """Generate standard labels from configuration data"""
+    labels = {}
+    
+    # Add any user-provided labels
+    if 'labels' in args:
+        labels.update(args['labels'])
+    
+    # Basic metadata
+    labels['org.openchami.image.name'] = args['name']
+    labels['org.openchami.image.type'] = args['layer_type']
+    labels['org.openchami.image.package-manager'] = args['pkg_manager']
+    labels['org.openchami.image.parent'] = args['parent']
+    
+    # Version/tag information
+    if isinstance(args['publish_tags'], list):
+        labels['org.openchami.image.tags'] = ','.join(args['publish_tags'])
+    else:
+        labels['org.openchami.image.tags'] = args['publish_tags']
+    
+    # Build information
+    labels['org.openchami.image.build-date'] = datetime.now().isoformat()
+    
+    # Repository information
+    if 'repos' in args:
+        repo_names = [repo['alias'] for repo in args['repos']]
+        labels['org.openchami.image.repositories'] = ','.join(repo_names)
+    
+    # Package information
+    if 'packages' in args:
+        labels['org.openchami.image.packages'] = ','.join(args['packages'])
+    
+    if 'package_groups' in args:
+        labels['org.openchami.image.package-groups'] = ','.join(args['package_groups'])
+    
+    return labels
 
 def publish(cname, args):
 
@@ -16,9 +54,19 @@ def publish(cname, args):
         credentials = args['credentials']
     parent = args['parent']
     
+    # Generate standard labels
+    labels = _generate_labels(args)
+    
     if args['publish_local']:
         for tag in publish_tags:
-            cmd(["buildah","commit", cname, layer_name+':'+tag], stderr_handler=logging.warn)
+            # Add labels if they exist
+            if labels:
+                label_args = []
+                for key, value in labels.items():
+                    label_args.extend(['--label', f'{key}={value}'])
+                cmd(["buildah", "commit"] + label_args + [cname, layer_name+':'+tag], stderr_handler=logging.warn)
+            else:
+                cmd(["buildah","commit", cname, layer_name+':'+tag], stderr_handler=logging.warn)
 
     if args['publish_s3']:
         print("pushing to s3")
@@ -31,7 +79,14 @@ def publish(cname, args):
         registry_opts = args['registry_opts_push']
         publish_dest = args['publish_registry']
         for tag in publish_tags:
-            cmd(["buildah", "commit", cname, layer_name+':'+tag], stderr_handler=logging.warn)
+            # Add labels if they exist
+            if labels:
+                label_args = []
+                for key, value in labels.items():
+                    label_args.extend(['--label', f'{key}={value}'])
+                cmd(["buildah", "commit"] + label_args + [cname, layer_name+':'+tag], stderr_handler=logging.warn)
+            else:
+                cmd(["buildah", "commit", cname, layer_name+':'+tag], stderr_handler=logging.warn)
             registry_push(layer_name, registry_opts, tag, publish_dest)
 
     # Clean up

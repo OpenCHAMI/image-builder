@@ -226,3 +226,61 @@ There is an equivalent flag/config option `--registry-opts-pull`/`registry-opts-
 ## Local
 
 Using the `--publish-local` flag or `publish-local` config key will push the resulting OCI image to the local podman registry using `buildah commit`.
+
+## Image Labels and Metadata
+
+The `image-build` tool automatically adds useful labels to images during the build process. These labels provide metadata about the image's contents and build process. You can also add custom labels through the configuration file.
+
+### Automatic Labels
+
+The following labels are automatically added to every image:
+
+- `org.openchami.image.name`: The name of the image
+- `org.openchami.image.type`: The layer type (base/ansible)
+- `org.openchami.image.package-manager`: The package manager used (dnf/zypper)
+- `org.openchami.image.parent`: The parent image used
+- `org.openchami.image.tags`: All tags associated with the image
+- `org.openchami.image.build-date`: ISO format timestamp of when the image was built
+- `org.openchami.image.repositories`: Comma-separated list of repository aliases used
+- `org.openchami.image.packages`: Comma-separated list of packages installed
+- `org.openchami.image.package-groups`: Comma-separated list of package groups installed
+
+### Custom Labels
+
+You can add custom labels to your images by including them in the configuration file:
+
+```yaml
+options:
+  layer_type: 'base'
+  name: 'rocky8-base'
+  publish_tags: '8.9'
+  pkg_manager: 'dnf'
+  parent: 'scratch'
+  publish_registry: 'registry.mysite.tld/openchami'
+  
+  # Custom labels
+  labels:
+    maintainer: 'Your Name <your.email@example.com>'
+    version: '1.0.0'
+    description: 'Base Rocky Linux 8 image'
+    org.opencontainers.image.source: 'https://github.com/your-org/your-repo'
+```
+
+### Viewing Labels
+
+You can view the labels on a built image using either `buildah` or `podman`:
+
+```bash
+# Using buildah
+buildah inspect <image-name>
+
+# Using podman
+podman inspect <image-name>
+```
+
+The labels will be visible in the output under the `Labels` section. These labels are preserved when the image is pushed to a registry and can be useful for:
+- Version tracking
+- Documentation
+- Build information
+- Compliance requirements
+- Image identification and organization
