@@ -52,7 +52,7 @@ def main():
         level = getattr(logging, args['log_level'].upper(), 10)
         logging.basicConfig(format='%(levelname)s - %(message)s',level=level)
 
-       	print_args(args) 
+        print_args(args) 
 
     except argparse.ArgumentError as e:
         print(f"Argument error: {e}")
