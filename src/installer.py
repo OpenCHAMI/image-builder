@@ -212,7 +212,7 @@ class Installer:
                 rargs = ['config-manager','--save','--add-repo', r['url']]
 
             args = [self.cname, '--', 'bash', '-c', self.pkg_man] + rargs
-            rc = cmd(["buildah","run"] + [self.pkg_man] + args)
+            rc = cmd(["buildah","run"] + args)
             if rc != 0:
                 raise Exception("Failed to install repo", r['alias'], r['url'])
             # Set Proxy if using DNF
