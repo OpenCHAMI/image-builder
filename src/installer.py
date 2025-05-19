@@ -207,11 +207,11 @@ class Installer:
                     priority = r['priority']
                 else:
                     priority = 99
-                rargs = ['addrepo','-f','-p', priority, r['url'], r['alias']]
+                rargs = ' addrepo -f -p ' + priority + ' ' + r['url'] + ' ' + r['alias']
             elif self.pkg_man == "dnf":
-                rargs = ['config-manager','--save','--add-repo', r['url']]
+                rargs = ' config-manager --save --add-repo ' + r['url']
 
-            args = [self.cname, '--', 'bash', '-c', self.pkg_man] + rargs
+            args = [self.cname, '--', 'bash', '-c', self.pkg_man + rargs]
             rc = cmd(["buildah","run"] + args)
             if rc != 0:
                 raise Exception("Failed to install repo", r['alias'], r['url'])
@@ -223,9 +223,9 @@ class Installer:
                     repo_name = r['url'].split('https://')[1].replace('/','_')
                 elif r['url'].startswith('http'):
                     repo_name = r['url'].split('http://')[1].replace('/','_')
-                pargs = ['config-manager', '--save', '--setopt=*.proxy=',proxy, repo_name]
+                pargs = ' config-manager --save --setopt=*.proxy= ' + proxy + ' ' + repo_name
 
-                args = [self.cname, '--', 'bash', '-c', self.pkg_man] + pargs
+                args = [self.cname, '--', 'bash', '-c', self.pkg_man + pargs]
                 rc = cmd(["buildah","run"] + args)
                 if rc != 0:
                     raise Exception("Failed to set proxy for repo", r['alias'], r['url'], proxy)
@@ -246,7 +246,7 @@ class Installer:
             return
         logging.info(f"PACKAGES: Installing these packages to {self.cname}")
         logging.info("\n".join(packages))
-        args = [self.cname, '--', 'bash', '-c', self.pkg_man, 'install'] + packages
+        args = [self.cname, '--', 'bash', '-c', self.pkg_man + ' install ' + " ".join(packages)]
         cmd(["buildah","run"] + args)
 
     def install_package_groups(self, package_groups):
@@ -257,7 +257,7 @@ class Installer:
         logging.info("\n".join(package_groups))
         if self.pkg_man == "zypper":
             logging.warn("zypper does not support package groups")
-        args = [self.cname, '--', 'bash', '-c', self.pkg_man, 'groupinstall'] + package_groups
+        args = [self.cname, '--', 'bash', '-c', self.pkg_man + ' groupinstall ' + " ".join(package_groups)]
         cmd(["buildah","run"] + args)
         
     def remove_packages(self, remove_packages):
