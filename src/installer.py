@@ -202,7 +202,7 @@ class Installer:
 
             if "gpg" in r:
                 # Using rpm apparently works for both Yum- and Zypper-based distros.
-                gargs = [self.cname, '--', 'bash', '-c', 'rpm', '--import', r['gpg']]
+                gargs = [self.cname, '--', 'bash', '-c', 'rpm --import ' + r['gpg']]
                 if proxy != "":
                     arg_env = os.environ.copy()
                     arg_env['https_proxy'] = proxy
@@ -227,7 +227,7 @@ class Installer:
         logging.info("\n".join(package_groups))
         if self.pkg_man == "zypper":
             logging.warn("zypper does not support package groups")
-        args = [self.cname, '--', 'bash', '-c', self.pkg_man] + package_groups
+        args = [self.cname, '--', 'bash', '-c', self.pkg_man, 'groupinstall'] + package_groups
         cmd(["buildah","run"] + args)
         
     def remove_packages(self, remove_packages):
