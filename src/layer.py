@@ -102,7 +102,7 @@ class Layer:
 
         # Copy Files
         try:
-            inst.install_base_copyfiles(copyfiles)
+            inst.install_copyfiles(copyfiles)
         except Exception as e:
             self.logger.error(f"Error running commands: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -114,7 +114,7 @@ class Layer:
 
         # Run Commands
         try:
-            inst.install_base_commands(commands)
+            inst.install_commands(commands)
             if os.path.islink(mname + '/etc/resolv.conf'):
                 self.logger.info("removing resolv.conf link (this link breaks running a container)")
                 os.unlink(mname + '/etc/resolv.conf')
