@@ -232,7 +232,7 @@ class Installer:
 
             if "gpg" in r:
                 # Using rpm apparently works for both Yum- and Zypper-based distros.
-                gargs = ['rpm', '--import', r['gpg']]
+                gargs = [self.cname, '--', 'bash', '-c', 'rpm', '--import', r['gpg']]
                 if proxy != "":
                     arg_env = os.environ.copy()
                     arg_env['https_proxy'] = proxy
