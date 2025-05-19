@@ -226,7 +226,7 @@ class Installer:
                 pargs = ['config-manager', '--save', '--setopt=*.proxy=',proxy, repo_name]
 
                 args = [self.cname, '--', 'bash', '-c', self.pkg_man] + pargs
-                rc = cmd(["buildah","run"] + [self.pkg_man] + args)
+                rc = cmd(["buildah","run"] + args)
                 if rc != 0:
                     raise Exception("Failed to set proxy for repo", r['alias'], r['url'], proxy)
 
