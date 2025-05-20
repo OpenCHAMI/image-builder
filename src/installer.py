@@ -247,13 +247,14 @@ class Installer:
             return
         logging.info(f"PACKAGES: Installing these packages to {self.cname}")
         logging.info("\n".join(packages))
-        args = [self.cname, '--', 'bash', '-c', self.pkg_man + ' install ']
+        args = [self.cname, '--', 'bash', '-c']
+        pkg_cmd =  [self.pkg_man, 'install', '-y']
         if self.gpgcheck is not True:
             if self.pkg_man == 'dnf':
-                args.append('--nogpgcheck')
+                pkg_cmd.append('--nogpgcheck')
             elif self.pkg_man == 'zypper':
-                args.append('--no-gpg-checks')
-        args.append(" ".join(packages))
+                pkg_cmd.append('--no-gpg-checks')
+        args.append(" ".join(pkg_cmd + packages))
         cmd(["buildah","run"] + args)
 
     def install_package_groups(self, package_groups):
@@ -262,12 +263,13 @@ class Installer:
             return
         logging.info(f"PACKAGES: Installing these package groups to {self.cname}")
         logging.info("\n".join(package_groups))
-        args = [self.cname, '--', 'bash', '-c', self.pkg_man + ' groupinstall ']
+        args = [self.cname, '--', 'bash', '-c']
+        pkg_cmd = [self.pkg_man, 'groupinstall', '-y']
         if self.pkg_man == "zypper":
             logging.warn("zypper does not support package groups")
         if self.gpgcheck is not True:
-            args.append('--nogpgcheck')
-        args.append(" ".join(package_groups))
+            pkg_cmd.append('--nogpgcheck')
+        args.append(" ".join(pkg_cmd + package_groups))
         cmd(["buildah","run"] + args)
         
     def remove_packages(self, remove_packages):

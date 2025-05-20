@@ -22,6 +22,10 @@ class Layer:
         container = self.args['name']
         registry_opts_pull = self.args['registry_opts_pull']
         package_manager = self.args['pkg_man']
+        if 'gpgcheck' in self.args:
+            gpgcheck = self.args['gpgcheck']
+        else:
+            gpgcheck = True
         if 'proxy' in self.args:
             proxy = self.args['proxy']
         else:
@@ -54,7 +58,7 @@ class Layer:
 
         inst = None
         try:
-            inst = installer.Installer(package_manager, cname, mname)
+            inst = installer.Installer(package_manager, cname, mname, gpgcheck)
         except Exception as e:
             self.logger.error(f"Error preparing installer: {e}")
             cmd(["buildah","rm"] + [cname])
