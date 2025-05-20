@@ -35,6 +35,7 @@ def main():
     parser.add_argument('--config', type=str, required=True, help='Configuration file is required')
     parser.add_argument('--repo', type=str, required=False)
     parser.add_argument('--pkg-manager', dest="pkg_man", type=str, required=False)
+    parser.add_argument('--gpgcheck', dest="gpgcheck", type=bool, required=False)
     parser.add_argument('--groups', dest='group_list', action='store', nargs='+', type=str, default=[], help='List of groups')
     parser.add_argument('--vars', dest='vars', action='store', nargs='+', type=str, default=[], help='List of variables')
     parser.add_argument('--pb', type=str)

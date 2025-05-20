@@ -7,10 +7,11 @@ import tempfile
 from utils import cmd
 
 class Installer:
-    def __init__(self, pkg_man, cname, mname):
+    def __init__(self, pkg_man, cname, mname, gpgcheck=True):
         self.pkg_man = pkg_man
         self.cname = cname
         self.mname = mname
+        self.gpgcheck = gpgcheck
 
         # Create temporary directory for logs, cache, etc. for package manager
         os.makedirs(os.path.join(mname, "tmp"), exist_ok=True)
@@ -246,7 +247,13 @@ class Installer:
             return
         logging.info(f"PACKAGES: Installing these packages to {self.cname}")
         logging.info("\n".join(packages))
-        args = [self.cname, '--', 'bash', '-c', self.pkg_man + ' install ' + " ".join(packages)]
+        args = [self.cname, '--', 'bash', '-c', self.pkg_man + ' install ']
+        if self.gpgcheck is not True:
+            if self.pkg_man == 'dnf':
+                args.append('--nogpgcheck')
+            elif self.pkg_man == 'zypper':
+                args.append('--no-gpg-checks')
+        args.append(" ".join(packages))
         cmd(["buildah","run"] + args)
 
     def install_package_groups(self, package_groups):
@@ -255,9 +262,12 @@ class Installer:
             return
         logging.info(f"PACKAGES: Installing these package groups to {self.cname}")
         logging.info("\n".join(package_groups))
+        args = [self.cname, '--', 'bash', '-c', self.pkg_man + ' groupinstall ']
         if self.pkg_man == "zypper":
             logging.warn("zypper does not support package groups")
-        args = [self.cname, '--', 'bash', '-c', self.pkg_man + ' groupinstall ' + " ".join(package_groups)]
+        if self.gpgcheck is not True:
+            args.append('--nogpgcheck')
+        args.append(" ".join(package_groups))
         cmd(["buildah","run"] + args)
         
     def remove_packages(self, remove_packages):
