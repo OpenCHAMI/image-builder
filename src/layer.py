@@ -87,8 +87,8 @@ class Layer:
                 # Packages
                 inst.install_scratch_packages(packages, repo_dest, proxy)
             else:
-                inst.install_package_groups(package_groups, repo_dest, proxy)
-                inst.install_packages(packages, repo_dest, proxy)
+                inst.install_package_groups(package_groups)
+                inst.install_packages(packages)
             # Remove Packages
             inst.remove_packages(remove_packages)
         except Exception as e:
