@@ -269,7 +269,7 @@ class Installer:
             logging.warn("zypper does not support package groups")
         if self.gpgcheck is not True:
             pkg_cmd.append('--nogpgcheck')
-        args.append(" ".join(pkg_cmd + package_groups))
+        args.append(" ".join(pkg_cmd + [f'"{pg}"' for pg in package_groups]))
         cmd(["buildah","run"] + args)
         
     def remove_packages(self, remove_packages):
