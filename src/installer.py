@@ -248,13 +248,13 @@ class Installer:
         logging.info(f"PACKAGES: Installing these packages to {self.cname}")
         logging.info("\n".join(packages))
         args = [self.cname, '--', 'bash', '-c']
-        pkg_cmd =  [self.pkg_man, 'install', '-y']
+        pkg_cmd =  [self.pkg_man]
         if self.gpgcheck is not True:
             if self.pkg_man == 'dnf':
                 pkg_cmd.append('--nogpgcheck')
             elif self.pkg_man == 'zypper':
                 pkg_cmd.append('--no-gpg-checks')
-        args.append(" ".join(pkg_cmd + packages))
+        args.append(" ".join(pkg_cmd + [ 'install', '-y'] + packages))
         cmd(["buildah","run"] + args)
 
     def install_package_groups(self, package_groups):
