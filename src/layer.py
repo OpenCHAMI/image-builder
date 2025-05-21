@@ -93,7 +93,6 @@ class Layer:
                 # Packages
                 inst.install_scratch_packages(packages, repo_dest, proxy)
             else:
-                #inst.install_modules(modules, repo_dest, self.args['proxy'])
                 inst.install_package_groups(package_groups, repo_dest, proxy)
                 inst.install_packages(packages, repo_dest, proxy)
             # Remove Packages

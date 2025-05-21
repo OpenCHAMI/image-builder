@@ -303,7 +303,7 @@ class Installer:
                     loglevel = logging.error
             else:
                 loglevel = logging.error
-            out = cmd(["buildah","run"] + args, stderr_handler=loglevel)
+            cmd(["buildah","run"] + args, stderr_handler=loglevel)
 
     def install_copyfiles(self, copyfiles):
         if len(copyfiles) == 0:
@@ -317,4 +317,4 @@ class Installer:
                     args.extend(o.split())
             logging.info(f['src'] + ' -> ' + f['dest'])
             args +=  [ self.cname, f['src'], f['dest'] ]
-            out=cmd(["buildah","copy"] + args)
+            cmd(["buildah","copy"] + args)
