@@ -22,7 +22,7 @@ def process_args(terminal_args, config_options):
         processed_args['pkg_man'] = terminal_args.pkg_man or config_options.get('pkg_manager')
         if not processed_args['pkg_man']:
             raise ValueError("'pkg_man' required when 'layer_type' is base")
-        processed_args['gpgcheck'] = terminal_args.gpgcheck or config_options.get('gpgcheck', False)
+        processed_args['gpgcheck'] = terminal_args.gpgcheck or config_options.get('gpgcheck', True)
     elif processed_args['layer_type'] == "ansible":
         processed_args['ansible_groups'] = terminal_args.group_list or config_options.get('groups', [])
         processed_args['ansible_pb'] = terminal_args.pb or config_options.get('playbooks', [])
