@@ -27,8 +27,8 @@ RUN setcap cap_setuid=ep "$(command -v newuidmap)" && \
     chmod 0755 "$(command -v newuidmap)" && \
     chmod 0755 "$(command -v newgidmap)" && \
     rpm --restore shadow-utils && \
-    echo "builder:2000:50000" > /etc/subuid && \
-    echo "builder:2000:50000" > /etc/subgid
+    echo "builder:2000:65534" > /etc/subuid && \
+    echo "builder:2000:65534" > /etc/subgid
 
 # Create local user for rootless image builds
 RUN useradd --uid 1002 builder && \

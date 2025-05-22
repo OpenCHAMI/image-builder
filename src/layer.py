@@ -15,37 +15,50 @@ class Layer:
         self.image_config = image_config
         self.logger = logging.getLogger(__name__)
 
-    def buildah_handler(line):
-        out.append(line)
-        return out
-
     def _build_base(self, repos, packages, package_groups, remove_packages, commands, copyfiles):
+        # Set local variables
         dt_string = datetime.now().strftime("%Y%m%d%H%M%S")
+        parent = self.args['parent']
+        container = self.args['name']
+        registry_opts_pull = self.args['registry_opts_pull']
+        package_manager = self.args['pkg_man']
+        if 'gpgcheck' in self.args:
+            gpgcheck = self.args['gpgcheck']
+        else:
+            gpgcheck = True
+        if 'proxy' in self.args:
+            proxy = self.args['proxy']
+        else:
+            proxy = ""
 
         # container and mount name
         def buildah_handler(line):
             out.append(line)
 
+        # Create a new container from parent
         out = []
-        cmd(["buildah", "from"] + self.args['registry_opts_pull'] + ["--name", self.args['name']+ dt_string, self.args['parent']], stdout_handler = buildah_handler)
+        cmd(["buildah", "from"] + registry_opts_pull + ["--name", container + dt_string, parent], stdout_handler = buildah_handler)
         cname = out[0]
 
-        out = []
-        cmd(["buildah", "mount"] + [cname], stdout_handler = buildah_handler)
-        mname = out[0]
+        # Only mount when doing a scratch install
+        if parent == "scratch":
+            out = []
+            cmd(["buildah", "mount"] + [cname], stdout_handler = buildah_handler)
+            mname = out[0]
+            self.logger.info(f"Container: {cname} mounted at {mname}")
+        else:
+            mname = ""
 
-        self.logger.info(f"Container: {cname} mounted at {mname}")
-
-        if self.args['pkg_man'] == "zypper":
+        if package_manager == "zypper":
             repo_dest = "/etc/zypp/repos.d"
-        elif self.args['pkg_man'] == "dnf":
+        elif package_manager == "dnf":
             repo_dest = "/etc/yum.repos.d"
         else:
             self.logger.error("unsupported package manager")
 
         inst = None
         try:
-            inst = installer.Installer(self.args['pkg_man'], cname, mname)
+            inst = installer.Installer(package_manager, cname, mname, gpgcheck)
         except Exception as e:
             self.logger.error(f"Error preparing installer: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -56,8 +69,11 @@ class Layer:
             sys.exit("Exiting now ...")
 
         # Install Repos
-        try: 
-            inst.install_repos(repos, repo_dest, self.args['proxy'])
+        try:
+            if parent == "scratch":
+                inst.install_scratch_repos(repos, repo_dest, proxy)
+            else:
+                inst.install_repos(repos, proxy)
         except Exception as e:
             self.logger.error(f"Error installing repos: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -69,12 +85,16 @@ class Layer:
 
         # Install Packages
         try:
-            # Base Package Groups
-            inst.install_base_package_groups(package_groups, repo_dest, self.args['proxy'])
-            # Packages
-            inst.install_base_packages(packages, repo_dest, self.args['proxy'])
+            if parent == "scratch":
+                # Base Package Groups
+                inst.install_scratch_package_groups(package_groups, repo_dest, proxy)
+                # Packages
+                inst.install_scratch_packages(packages, repo_dest, proxy)
+            else:
+                inst.install_package_groups(package_groups)
+                inst.install_packages(packages)
             # Remove Packages
-            inst.remove_base_packages(remove_packages)
+            inst.remove_packages(remove_packages)
         except Exception as e:
             self.logger.error(f"Error installing packages: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -86,7 +106,7 @@ class Layer:
 
         # Copy Files
         try:
-            inst.install_base_copyfiles(copyfiles)
+            inst.install_copyfiles(copyfiles)
         except Exception as e:
             self.logger.error(f"Error running commands: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -98,7 +118,7 @@ class Layer:
 
         # Run Commands
         try:
-            inst.install_base_commands(commands)
+            inst.install_commands(commands)
             if os.path.islink(mname + '/etc/resolv.conf'):
                 self.logger.info("removing resolv.conf link (this link breaks running a container)")
                 os.unlink(mname + '/etc/resolv.conf')
