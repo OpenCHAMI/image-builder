@@ -15,10 +15,6 @@ class Layer:
         self.image_config = image_config
         self.logger = logging.getLogger(__name__)
 
-    def buildah_handler(line):
-        out.append(line)
-        return out
-
     def _build_base(self, repos, packages, package_groups, remove_packages, commands, copyfiles):
         dt_string = datetime.now().strftime("%Y%m%d%H%M%S")
 
