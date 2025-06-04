@@ -118,7 +118,6 @@ def squash_image(mname, tmpdir):
     #     print(process.stdout)
 
 def s3_push(cname, layer_name, credentials, publish_tags, s3_prefix, s3_bucket):
-
     def buildah_handler(line):
             out.append(line)
     out = []
@@ -152,7 +151,6 @@ def s3_push(cname, layer_name, credentials, publish_tags, s3_prefix, s3_bucket):
         push_file(tmpdir + '/rootfs', image_name, s3, s3_bucket)
 
 def registry_push(layer_name, registry_opts, publish_tags, registry_endpoint):
-
     image_name = layer_name+':'+publish_tags
     print("pushing layer " + layer_name + " to " + registry_endpoint +'/'+image_name)
     args = registry_opts + [image_name, registry_endpoint +'/'+image_name]
