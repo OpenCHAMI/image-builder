@@ -21,23 +21,19 @@ RUN pip3.11 install -r /requirements.txt
 COPY src/ /usr/local/bin/
 RUN chmod -R 0755 /usr/local/bin/
 
+COPY entrypoint.sh /entrypoint.sh
+
 # Allow non-root to run buildah commands
 RUN setcap cap_setuid=ep "$(command -v newuidmap)" && \
     setcap cap_setgid=ep "$(command -v newgidmap)" &&\
     chmod 0755 "$(command -v newuidmap)" && \
     chmod 0755 "$(command -v newgidmap)" && \
-    rpm --restore shadow-utils && \
-    echo "builder:2000:65534" > /etc/subuid && \
-    echo "builder:2000:65534" > /etc/subgid
+    rpm --restore shadow-utils
 
 # Create local user for rootless image builds
-RUN useradd --uid 1002 builder && \
+RUN useradd --uid 1000 builder && \
     chown -R builder /home/builder
-
-# Make builder the default user when running container
-USER builder
-WORKDIR /home/builder
 
 ENV BUILDAH_ISOLATION=chroot
 
-ENTRYPOINT ["/usr/bin/buildah", "unshare"]
+ENTRYPOINT ["/entrypoint.sh"]

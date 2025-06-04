@@ -1,0 +1,15 @@
+# Build a a layer importing from bci-base
+options:
+  layer_type: 'base'
+  name: 'suse-base'
+  publish_tags:
+    - '15.7'
+  pkg_manager: 'zypper'
+  parent: 'registry.suse.com/bci/bci-base:15.7'
+  publish_local: true
+
+packages:
+  - cloud-init
+  - python3
+  - vim
+  - chrony
