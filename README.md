@@ -10,12 +10,18 @@ The recommended and official way to run `image-build` is using the `ghcr.io/open
 To build an image using the container, the config file needs to be mapped into the container, as well as the FUSE filesystem device:
 
 ```
-podman run \
-  --rm \
+podman run --rm \
   --device /dev/fuse \
-  -v /path/to/config.yaml:/home/builder/config.yaml \
+  --network host \
+  --cap-add=SYS_ADMIN \
+  --cap-add=SETUID \
+  --cap-add=SETGID \
+  --security-opt seccomp=unconfined \
+  --security-opt label=disable \
+  --userns=keep-id \
+  -v /opt/workdir/images/test-rocky-9.5.yaml:/home/builder/config.yaml \
   ghcr.io/openchami/image-build:latest \
-  image-build --config config.yaml
+  image-build --config config.yaml --log-level DEBUG
 ```
 
 If the config.yaml pushes to S3, specify the credentials by adding `-e S3_ACCESS=<s3-user>` and `-e S3_SECRET=<s3-password>` to the command above. See [S3](#s3) below.

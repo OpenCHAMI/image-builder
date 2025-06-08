@@ -1,14 +1,16 @@
 #!/bin/bash
+set -euo pipefail
 
-if [[ ! -v USERNS_RANGE ]]
-then
-	USERNS_RANGE=64536
+# Only do this if you really need to override inside-container subuid/gid behavior
+# Usually not needed unless you're testing mapping features
+if [[ -w /etc/subuid && -w /etc/subgid ]]; then
+  echo "builder:1001:${USERNS_RANGE:-65536}" > /etc/subuid
+  echo "builder:1001:${USERNS_RANGE:-65536}" > /etc/subgid
 fi
 
+# Make sure builder owns its homedir (optional if baked into image)
+chown -R builder /home/builder || true
 
-echo "builder:1001:${USERNS_RANGE}" > /etc/subuid
-echo "builder:1001:${USERNS_RANGE}" > /etc/subgid
+# Run buildah directly
+exec buildah unshare "$@"
 
-chown -R builder /home/builder
-
-exec su builder -c "buildah unshare $*"
