@@ -43,6 +43,10 @@ class ImageConfig:
     def get_repos(self):
         return self.config_data.get('repos', [])
 
+    def get_oscap_config(self):
+        return self.config_data.get('oscap_template', [])
+
+
 if __name__ == "__main__":
     config = ImageConfig("ochami-images/base-configs/base.yaml")
     options = config.get_options()

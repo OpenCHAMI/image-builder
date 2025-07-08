@@ -39,7 +39,11 @@ def main():
     parser.add_argument('--vars', dest='vars', action='store', nargs='+', type=str, default=[], help='List of variables')
     parser.add_argument('--pb', type=str)
     parser.add_argument('--inventory', nargs='+', default=[], help='Inventory list')
-    
+    parser.add_argument('--scap-benchmark', dest="scap_benchmark", action='store_true', required=False)
+    parser.add_argument('--oval-eval', dest="oval_eval", action='store_true', required=False)
+    parser.add_argument('--install-scap', dest="install_scap", action='store_true', required=False)
+
+
     try:
         terminal_args = parser.parse_args()
 
