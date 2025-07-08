@@ -135,12 +135,34 @@ def s3_push(cname, layer_name, credentials, publish_tags, s3_prefix, s3_bucket):
                     aws_secret_access_key=credentials['secret_key'],
                     verify=False, use_ssl=False)
 
-    kver=os.listdir(mdir+'/lib/modules/')[0]
-    if os.path.isfile(mdir+'/boot/initramfs-'+kver+'.img'):
-        initrd='initramfs-'+kver+'.img'
-    elif os.path.isfile(mdir+'/boot/initrd-'+kver):
-        initrd='initrd-'+kver
-    vmlinuz='vmlinuz-'+kver
+    # Set initrd to be blank to act as sentinel in case no intrds are found
+    initrd = ''
+
+    # Iterate over everything in /lib/modules and use the first initramfs or
+    # initrd found.
+    #
+    # TODO: Be smarter about chooding initramfs. This code only uses the first
+    #       available one.
+    kvers = os.listdir(mdir+'/lib/modules/')
+    logging.info(f'Available kernel versions: {kvers}')
+    for kver in kvers:
+        if os.path.isfile(mdir+'/boot/initramfs-'+kver+'.img'):
+            initrd='initramfs-'+kver+'.img'
+            logging.info(f'Found initrd: {initrd}')
+        elif os.path.isfile(mdir+'/boot/initrd-'+kver):
+            initrd='initrd-'+kver
+            logging.info(f'Found initrd: {initrd}')
+        else:
+            logging.warn(f'No initramfs found for {kver}, moving to next')
+            continue
+        vmlinuz='vmlinuz-'+kver
+        break
+
+    # If no initramfses are found, return an error
+    #
+    # TODO: Should we continue without uploading if this fails?
+    if initrd == '':
+        raise Exception('No initramfs or initrd found in /boot for any of the available kernel versions')
 
     with tempfile.TemporaryDirectory() as tmpdir:
         squash_image(mdir, tmpdir)
