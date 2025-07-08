@@ -58,8 +58,14 @@ class Oscap:
         ]
         try:
             self.inst.install_base_commands(commands)
-        except: 
-            self.logger.error("Error with SCAP benchmark and generation of remeditation scripts - please check the logs - most likely missing the scap-security-guide package")
+        except Exception as e:
+            self.logger.error("Error with SCAP oval eval - Please check the logs")
+            cmd(["buildah","rm"] + [cname])
+            sys.exit("Exiting now")
+        except KeyboardInterrupt:
+            self.logger.error(f"Keyboard Interrupt")
+            cmd(["buildah","rm"] + [cname])
+            sys.exit("Exiting now ...")
 
     def run_oscap(self, oscap_config):
         config = self._get_oscap_config()
@@ -76,8 +82,14 @@ class Oscap:
         ]
         try:
             self.inst.install_base_commands(commands)
-        except: 
-            self.logger.error("Error with OVAL eval - please check the logs")
+        except Exception as e:
+            self.logger.error("Error with SCAP benchmark and generation of remediation script - please check the logs")
+            cmd(["buildah","rm"] + [cname])
+            sys.exit("Exiting now")
+        except KeyboardInterrupt:
+            self.logger.error(f"Keyboard Interrupt")
+            cmd(["buildah","rm"] + [cname])
+            sys.exit("Exiting now ...")
 
 
     def _get_oscap_config(self):
