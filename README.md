@@ -97,13 +97,13 @@ options:
   # Flags available pertaining to OpenSCAP
   # Install openscap-utils scap-security-guide bzip2 to image
   #install_scap: true
-  # Run a SCAP scan using the xxcdf option. Use this if a SCAP scan is desired.
+  # Run a SCAP scan using the xccdf option. Use this if a SCAP scan is desired.
   # (Required if using)
-  # - the file path to xxcdf xml - specify with the
+  # - the file path to xccdf xml - specify with the
   #   benchmark_path key
   # - profile selection - depends on xml specify with profile key
   #scap_benchmark: true
-  # Run a OVAL evaluation
+  # Run an OVAL evaluation
   # (Required if using)
   # - Link of URL to latest OVAL available for Linux distribution - specify
   #   with oval_url key 
@@ -138,22 +138,22 @@ packages:
 cmds:
   - cmd: 'echo hello'
 
-# OpenSCAP options to use with scap_benchmark or oval_eval. Each OpenSCAP
-# command gets passed to the shell. By default the results from openscap will be saved
+# OpenSCAP options to use with scap_benchmark or oval_eval. Each OpenSCAP 
+# command gets passed to the shell. By default, the results from OpenSCAP will be saved 
 # /root/ inside of the container built.
-#
-# The xxcdf or Extensible Configuration Checklist Description Format, is a
+# 
+# The xccdf or Extensible Configuration Checklist Description Format, is a 
 # language used to describe security checklists and benchmarks. The xml for 
-# SCAP benchmarks is specific to each linux distribution and it is
-# typically available via scap-security-guide package. Each xml will have profiles
-# associated with it. Available profiles can be checked with 'oscap info <path to xml>.
-# Not every Linux distro is going to provide a out of box ready xxcdf xml it may need to
+# SCAP benchmarks is specific to each Linux distribution, and it is 
+# typically, available via scap-security-guide package. Each xml will have profiles 
+# associated with it. Available profiles can be checked with 'oscap info <path to xml> 
+# Not every Linux distro is going to provide a out of box ready xccdf xml it may need to 
 # be customized
-#
-# The OVAL or Open Vulnerablity accessment language is a language used to
-# standardize the representation of information about system security states. In
-# short it gives info on if packages on the image have CVEs (Common Vulnerabilities and
-# Exposures) associated with them. Not every Linux distro is going to have a OVAL
+# 
+# The OVAL or Open Vulnerability Assessment Language is a language used to 
+# standardize the representation of information about system security states. In 
+# short it gives info on if packages on the image have CVEs (Common Vulnerabilities and 
+# Exposures) associated with them. Not every Linux distro is going to have a OVAL 
 # available for download 
 #openscap:
 #  - profile: "xccdf_org.ssgproject.content_profile_stig"
