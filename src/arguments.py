@@ -66,7 +66,7 @@ def process_args(terminal_args, config_options):
     processed_args['publish_tags'] = terminal_args.publish_tags or config_options.get('publish_tags',['latest'])
     
     processed_args['scap_benchmark'] = terminal_args.scap_benchmark or config_options.get('scap_benchmark', False)
-    processed_args['oval_eval'] = terminal_args.oval_eval or config_options.get('oval_val', False)
+    processed_args['oval_eval'] = terminal_args.oval_eval or config_options.get('oval_eval', False)
     processed_args['install_scap'] = terminal_args.install_scap or config_options.get('install_scap', False)
 
     # If no publish options were passed in either the CLI or the config file, store locally.
