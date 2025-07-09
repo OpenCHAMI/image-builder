@@ -19,7 +19,7 @@ class Oscap:
         try:
             self.inst.install_base_commands(commands)
         except Exception as e:
-            self.logger.error(f"openscap not found - Try installing the following: openscap-utils scap-security-guide: {e}")
+            self.logger.error(f"openscap not found - Try installing the following: openscap-utils scap-security-guide or passing in --install-scap to image-builder: {e}")
             cmd(["buildah","rm"] + [cname])
             sys.exit("Exiting now")
         except KeyboardInterrupt:
@@ -58,7 +58,7 @@ class Oscap:
         try:
             self.inst.install_base_commands(commands)
         except Exception as e:
-            self.logger.error("Error with SCAP oval eval - Please check the logs")
+            self.logger.error("Error with SCAP OVAL eval - Please check the logs: {e}")
             cmd(["buildah","rm"] + [cname])
             sys.exit("Exiting now")
         except KeyboardInterrupt:
@@ -77,7 +77,7 @@ class Oscap:
         try:
             self.inst.install_base_commands(commands)
         except Exception as e:
-            self.logger.error("Error with SCAP benchmark and generation of remediation script - please check the logs")
+            self.logger.error("Error with SCAP benchmark and generation of remediation script - please check the logs: {e}")
             cmd(["buildah","rm"] + [cname])
             sys.exit("Exiting now")
         except KeyboardInterrupt:
@@ -95,7 +95,7 @@ class Oscap:
         }
 
     def _check_scap_install(self):
-        return f"oscap --help"
+        return f"oscap --version"
 
     def _generate_scap_package_list(self):
         return ["openscap-utils",  "scap-security-guide", "bzip2"]
