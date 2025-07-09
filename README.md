@@ -94,6 +94,21 @@ options:
   s3_prefix: 'compute/base/'
   s3_bucket: 'boot-images'
 
+  # Flags available pertaining to OpenSCAP
+  # Install openscap-utils scap-security-guide bzip2 to image
+  #install_scap: true
+  # Run a SCAP scan using the xccdf option. Use this if a SCAP scan is desired.
+  # (Required if using)
+  # - the file path to xccdf xml - specify with the
+  #   benchmark_path key
+  # - profile selection - depends on xml specify with profile key
+  #scap_benchmark: true
+  # Run an OVAL evaluation
+  # (Required if using)
+  # - Link of URL to latest OVAL available for Linux distribution - specify
+  #   with oval_url key 
+  #oval_eval: true
+
 # Package repositories to add. This example uses YUM/DNF repositories.
 repos:
   - alias: 'rocky-baseos'
@@ -122,6 +137,28 @@ packages:
 # control command verbosity. By default, it is 'INFO'.
 cmds:
   - cmd: 'echo hello'
+
+# OpenSCAP options to use with scap_benchmark or oval_eval. Each OpenSCAP 
+# command gets passed to the shell. By default, the results from OpenSCAP will be saved 
+# /root/ inside of the container built.
+# 
+# The xccdf or Extensible Configuration Checklist Description Format, is a 
+# language used to describe security checklists and benchmarks. The xml for 
+# SCAP benchmarks is specific to each Linux distribution, and it is 
+# typically, available via scap-security-guide package. Each xml will have profiles 
+# associated with it. Available profiles can be checked with 'oscap info <path to xml> 
+# Not every Linux distro is going to provide a out of box ready xccdf xml it may need to 
+# be customized
+# 
+# The OVAL or Open Vulnerability Assessment Language is a language used to 
+# standardize the representation of information about system security states. In 
+# short it gives info on if packages on the image have CVEs (Common Vulnerabilities and 
+# Exposures) associated with them. Not every Linux distro is going to have a OVAL 
+# available for download 
+#openscap:
+#  - profile: "xccdf_org.ssgproject.content_profile_stig"
+#  - benchmark_path: "/usr/share/xml/scap/ssg/content/ssg-rl9-ds.xml"
+#  - oval_url: "<Rocky Linux OVAL .bz2 URL>"
 ```
 
 Then you can use this config file to build a "base" layer (make sure the `S3_ACCESS` and `S3_SECRET` environment variables are set to the S3 credentials if being used):
@@ -284,3 +321,4 @@ The labels will be visible in the output under the `Labels` section. These label
 - Build information
 - Compliance requirements
 - Image identification and organization
+

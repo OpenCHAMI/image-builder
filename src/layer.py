@@ -7,6 +7,7 @@ from utils import cmd, run_playbook
 from publish import publish
 import installer
 import logging
+from oscap import Oscap
 
 
 class Layer:
@@ -19,7 +20,7 @@ class Layer:
         out.append(line)
         return out
 
-    def _build_base(self, repos, modules, packages, package_groups, remove_packages, commands, copyfiles):
+    def _build_base(self, repos, modules, packages, package_groups, remove_packages, commands, copyfiles, oscap_options):
         dt_string = datetime.now().strftime("%Y%m%d%H%M%S")
 
         # container and mount name
@@ -112,6 +113,17 @@ class Layer:
             self.logger.error(f"Keyboard Interrupt")
             cmd(["buildah","rm"] + [cname])
             sys.exit("Exiting now ...")
+        
+        # OpenSCAP 
+        if self.args['install_scap'] or self.args['scap_benchmark'] or self.args['oval_eval']: 
+            oscap = Oscap(oscap_options, self.args, inst)
+            if self.args['install_scap']:
+                oscap.install_scap()
+            oscap.check_install()
+            if self.args['scap_benchmark']:
+                oscap.run_oscap()
+            if self.args['oval_eval']:
+                oscap.run_oval_eval()
 
         return cname
 
@@ -151,8 +163,9 @@ class Layer:
             remove_packages = self.image_config.get_remove_packages()
             commands = self.image_config.get_commands()
             copyfiles = self.image_config.get_copy_files()
+            oscap_options = self.image_config.get_oscap_options()
 
-            cname = self._build_base(repos, modules, packages, package_groups, remove_packages, commands, copyfiles)
+            cname = self._build_base(repos, modules, packages, package_groups, remove_packages, commands, copyfiles, oscap_options)
         elif self.args['layer_type'] == "ansible":
             layer_name = self.args['name']
             print("Layer_Name =", layer_name)
