@@ -2,7 +2,11 @@ import logging
 from utils import cmd
 
 class Oscap:
-    def __init__(self, args, inst):
+    def __init__(self, oscap_options, args, inst):
+        oscap_config = self._get_oscap_filepaths()
+        for i in oscap_options:
+            oscap_config.update(i)
+        self.oscap_config = oscap_config
         self.args = args
         self.inst = inst
         self.logger = logging.getLogger(__name__)
@@ -43,14 +47,9 @@ class Oscap:
             sys.exit("Exiting now ...")
 
 
-    def run_oval_eval(self, oscap_config):
-        config = self._get_oscap_config()
-        for i in oscap_config:
-            config.update(i)
-        self.logger.error(config)
-
-        obtain_oval_cmd = self._generate_obtain_oval_cmd(config)
-        evaluation_oval = self._generate_evaluate_oval(config)
+    def run_oval_eval(self):
+        obtain_oval_cmd = self._generate_obtain_oval_cmd()
+        evaluation_oval = self._generate_evaluate_oval()
 
         commands = [
             {'cmd': obtain_oval_cmd, 'loglevel': 'DEBUG'},
@@ -67,14 +66,9 @@ class Oscap:
             cmd(["buildah","rm"] + [cname])
             sys.exit("Exiting now ...")
 
-    def run_oscap(self, oscap_config):
-        config = self._get_oscap_config()
-        for i in oscap_config:
-            config.update(i)
-        self.logger.error(config)
-
-        evaluation_cmd = self._generate_evaluate_cmd(config)
-        remediation_cmd = self._generate_remediate_cmd(config)
+    def run_oscap(self):
+        evaluation_cmd = self._generate_evaluate_cmd()
+        remediation_cmd = self._generate_remediate_cmd()
 
         commands = [
             {'cmd': evaluation_cmd, 'loglevel': 'DEBUG'},
@@ -92,7 +86,7 @@ class Oscap:
             sys.exit("Exiting now ...")
 
 
-    def _get_oscap_config(self):
+    def _get_oscap_filepaths(self):
         return {
             'results_path': "/root/scan.xml",
             'remediate_path': "/root/remediate.sh",
@@ -106,15 +100,15 @@ class Oscap:
     def _generate_scap_package_list(self):
         return ["openscap-utils",  "scap-security-guide", "bzip2"]
 
-    def _generate_evaluate_cmd(self, config):
-        return f"oscap xccdf eval --fetch-remote-resources --profile {config['profile']} --results {config['results_path']} {config['benchmark_path']} || true"
+    def _generate_evaluate_cmd(self):
+        return f"oscap xccdf eval --fetch-remote-resources --profile {self.oscap_config['profile']} --results {self.oscap_config['results_path']} {self.oscap_config['benchmark_path']} || true"
 
-    def _generate_evaluate_oval(self, config):
-        return f"oscap oval eval --report {config['oval_path']} {config['oval_xml']} || true"
+    def _generate_evaluate_oval(self):
+        return f"oscap oval eval --report {self.oscap_config['oval_path']} {self.oscap_config['oval_xml']} || true"
 
-    def _generate_obtain_oval_cmd(self, config):
-        return f"curl -L -o - {config['oval_url']} | bzip2 --decompress > {config['oval_xml']}"
+    def _generate_obtain_oval_cmd(self):
+        return f"curl -L -o - {self.oscap_config['oval_url']} | bzip2 --decompress > {self.oscap_config['oval_xml']}"
 
-    def _generate_remediate_cmd(self, config):
-        return f"oscap xccdf generate fix --output {config['remediate_path']} --profile {config['profile']} {config['results_path']}"
+    def _generate_remediate_cmd(self):
+        return f"oscap xccdf generate fix --output {self.oscap_config['remediate_path']} --profile {self.oscap_config['profile']} {self.oscap_config['results_path']}"
 
