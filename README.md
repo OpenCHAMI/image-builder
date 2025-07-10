@@ -284,3 +284,23 @@ The labels will be visible in the output under the `Labels` section. These label
 - Build information
 - Compliance requirements
 - Image identification and organization
+
+## Validating Configuration Files
+
+Before running `image-build` it can be helpful to check that a YAML
+configuration file follows the expected schema.  The project ships with
+a lightweight parser in `src/image_dsl.py` which can be used to load and
+validate a config file:
+
+```python
+from image_dsl import load_dsl, DSLValidationError
+
+try:
+    config = load_dsl("config.yaml")
+    print("config looks good!", config.options.name)
+except DSLValidationError as err:
+    print(f"Configuration error: {err}")
+```
+
+The parser ensures required fields are present and that common mistakes
+in the DSL are caught before attempting to build an image.
