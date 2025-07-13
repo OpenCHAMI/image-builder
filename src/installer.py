@@ -7,10 +7,11 @@ import tempfile
 from utils import cmd
 
 class Installer:
-    def __init__(self, pkg_man, cname, mname):
+    def __init__(self, pkg_man, cname, mname, gpgcheck=True):
         self.pkg_man = pkg_man
         self.cname = cname
         self.mname = mname
+        self.gpgcheck = gpgcheck
 
         # Create temporary directory for logs, cache, etc. for package manager
         os.makedirs(os.path.join(mname, "tmp"), exist_ok=True)
@@ -21,7 +22,7 @@ class Installer:
             # DNF complains if the log directory is not present
             os.makedirs(os.path.join(self.tdir, "dnf/log"))
 
-    def install_repos(self, repos, repo_dest, proxy):
+    def install_scratch_repos(self, repos, repo_dest, proxy):
         # check if there are repos passed for install
         if len(repos) == 0:
             logging.info("REPOS: no repos passed to install\n")
@@ -92,7 +93,7 @@ class Installer:
                 if rc != 0:
                     raise Exception("Failed to install gpg key for", r['alias'], "at URL", r['gpg'])
 
-    def install_base_packages(self, packages, registry_loc, proxy):
+    def install_scratch_packages(self, packages, registry_loc, proxy):
         # check if there are packages to install
         if len(packages) == 0:
             logging.warn("PACKAGES: no packages passed to install\n")
@@ -134,19 +135,7 @@ class Installer:
         if rc == 107:
             logging.warn("one or more RPM postscripts failed to run")
 
-    def remove_base_packages(self, remove_packages):
-        # check if there are packages to remove
-        if len(remove_packages) == 0:
-            logging.warn("REMOVE PACKAGES: no package passed to remove\n")
-            return
-
-        logging.info(f"REMOVE PACKAGES: removing these packages from container {self.cname}")
-        logging.info("\n".join(remove_packages))
-        for p in remove_packages:
-            args = [self.cname, '--', 'rpm', '-e', '--nodeps', p]
-            cmd(["buildah","run"] + args)
-
-    def install_base_package_groups(self, package_groups, registry_loc, proxy):
+    def install_scratch_package_groups(self, package_groups, registry_loc, proxy):
         # check if there are packages groups to install
         if len(package_groups) == 0:
             logging.warn("PACKAGE GROUPS: no package groups passed to install\n")
@@ -175,7 +164,7 @@ class Installer:
         if rc == 104:
             raise Exception("Installing base packages failed")
 
-    def install_base_modules(self, modules, registry_loc, proxy):
+    def install_scratch_modules(self, modules, registry_loc, proxy):
         # check if there are modules groups to install
         if len(modules) == 0:
             logging.warn("PACKAGE MODULES: no modules passed to install\n")
@@ -205,8 +194,97 @@ class Installer:
             if rc != 0:
                 raise Exception("Failed to run module cmd", mod_cmd, ' '.join(mod_list))
             
+    def install_repos(self, repos, proxy):
+        # check if there are repos passed for install
+        if len(repos) == 0:
+            logging.info("REPOS: no repos passed to install\n")
+            return
 
-    def install_base_commands(self, commands):
+        logging.info(f"REPOS: Installing these repos to {self.cname}")
+        for r in repos:
+            logging.info(r['alias'] + ': ' + r['url'])
+            if self.pkg_man == "zypper":
+                if 'priority' in r:
+                    priority = r['priority']
+                else:
+                    priority = 99
+                rargs = ' addrepo -f -p ' + priority + ' ' + r['url'] + ' ' + r['alias']
+            elif self.pkg_man == "dnf":
+                rargs = ' config-manager --save --add-repo ' + r['url']
+
+            args = [self.cname, '--', 'bash', '-c', self.pkg_man + rargs]
+            rc = cmd(["buildah","run"] + args)
+            if rc != 0:
+                raise Exception("Failed to install repo", r['alias'], r['url'])
+            # Set Proxy if using DNF
+            if proxy != "":
+                if r['url'].endswith('.repo'):
+                    repo_name = r['url'].split('/')[-1].split('.repo')[0] + "*"
+                elif r['url'].startswith('https'):
+                    repo_name = r['url'].split('https://')[1].replace('/','_')
+                elif r['url'].startswith('http'):
+                    repo_name = r['url'].split('http://')[1].replace('/','_')
+                pargs = ' config-manager --save --setopt=*.proxy= ' + proxy + ' ' + repo_name
+
+                args = [self.cname, '--', 'bash', '-c', self.pkg_man + pargs]
+                rc = cmd(["buildah","run"] + args)
+                if rc != 0:
+                    raise Exception("Failed to set proxy for repo", r['alias'], r['url'], proxy)
+
+            if "gpg" in r:
+                # Using rpm apparently works for both Yum- and Zypper-based distros.
+                gargs = [self.cname, '--', 'bash', '-c', 'rpm --import ' + r['gpg']]
+                if proxy != "":
+                    arg_env = os.environ.copy()
+                    arg_env['https_proxy'] = proxy
+                rc = cmd(["buildah","run"] + gargs)
+                if rc != 0:
+                    raise Exception("Failed to install gpg key for", r['alias'], "at URL", r['gpg'])
+
+    def install_packages(self, packages):
+        if len(packages) == 0:
+            logging.warn("PACKAGE GROUPS: no package groups passed to install\n")
+            return
+        logging.info(f"PACKAGES: Installing these packages to {self.cname}")
+        logging.info("\n".join(packages))
+        args = [self.cname, '--', 'bash', '-c']
+        pkg_cmd =  [self.pkg_man]
+        if self.gpgcheck is not True:
+            if self.pkg_man == 'dnf':
+                pkg_cmd.append('--nogpgcheck')
+            elif self.pkg_man == 'zypper':
+                pkg_cmd.append('--no-gpg-checks')
+        args.append(" ".join(pkg_cmd + [ 'install', '-y'] + packages))
+        cmd(["buildah","run"] + args)
+
+    def install_package_groups(self, package_groups):
+        if len(package_groups) == 0:
+            logging.warn("PACKAGE GROUPS: no package groups passed to install\n")
+            return
+        logging.info(f"PACKAGES: Installing these package groups to {self.cname}")
+        logging.info("\n".join(package_groups))
+        args = [self.cname, '--', 'bash', '-c']
+        pkg_cmd = [self.pkg_man, 'groupinstall', '-y']
+        if self.pkg_man == "zypper":
+            logging.warn("zypper does not support package groups")
+        if self.gpgcheck is not True:
+            pkg_cmd.append('--nogpgcheck')
+        args.append(" ".join(pkg_cmd + [f'"{pg}"' for pg in package_groups]))
+        cmd(["buildah","run"] + args)
+        
+    def remove_packages(self, remove_packages):
+        # check if there are packages to remove
+        if len(remove_packages) == 0:
+            logging.warn("REMOVE PACKAGES: no package passed to remove\n")
+            return
+
+        logging.info(f"REMOVE PACKAGES: removing these packages from container {self.cname}")
+        logging.info("\n".join(remove_packages))
+        for p in remove_packages:
+            args = [self.cname, '--', 'rpm', '-e', '--nodeps', p]
+            cmd(["buildah","run"] + args)
+
+    def install_commands(self, commands):
         # check if there are commands to install
         if len(commands) == 0:
             logging.warn("COMMANDS: no commands passed to run\n")
@@ -225,9 +303,9 @@ class Installer:
                     loglevel = logging.error
             else:
                 loglevel = logging.error
-            out = cmd(["buildah","run"] + args, stderr_handler=loglevel)
+            cmd(["buildah","run"] + args, stderr_handler=loglevel)
 
-    def install_base_copyfiles(self, copyfiles):
+    def install_copyfiles(self, copyfiles):
         if len(copyfiles) == 0:
             logging.warn("COPYFILES: no files to copy\n")
             return
@@ -239,4 +317,4 @@ class Installer:
                     args.extend(o.split())
             logging.info(f['src'] + ' -> ' + f['dest'])
             args +=  [ self.cname, f['src'], f['dest'] ]
-            out=cmd(["buildah","copy"] + args)
+            cmd(["buildah","copy"] + args)

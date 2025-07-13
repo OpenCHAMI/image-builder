@@ -15,10 +15,10 @@ RUN microdnf install -y \
     microdnf clean all
 
 # Create local user for rootless image builds
-RUN echo "builder:x:1002:1002::/home/builder:/bin/bash" >> /etc/passwd && \
-    echo "builder:x:1002:" >> /etc/group && \
+RUN echo "builder:x:1000:1000::/home/builder:/bin/bash" >> /etc/passwd && \
+    echo "builder:x:1000:" >> /etc/group && \
     mkdir -p /home/builder && \
-    chown -R 1002:1002 /home/builder
+    chown -R 1000:1000 /home/builder
 
 # Add our custom scripts
 COPY src/ /usr/local/bin/
@@ -28,20 +28,16 @@ RUN chmod -R 0755 /usr/local/bin/
 RUN setcap cap_setuid=ep "$(command -v newuidmap)" && \
     setcap cap_setgid=ep "$(command -v newgidmap)" && \
     chmod 0755 "$(command -v newuidmap)" && \
-    chmod 0755 "$(command -v newgidmap)" && \
-    echo "builder:2000:50000" > /etc/subuid && \
-    echo "builder:2000:50000" > /etc/subgid
+    chmod 0755 "$(command -v newgidmap)"
 
 # Set up environment variables
 ENV BUILDAH_ISOLATION=chroot
 
 # Switch to non-root user
-USER builder
 # Verify Python functionality
 RUN python3.11 -m pip install --no-cache-dir --upgrade pip && \
     python3.11 -m pip install --no-cache-dir PyYAML ansible==11.1.0 ansible-base ansible-bender boto3 dnspython requests jinja2_ansible_filters
 
-WORKDIR /home/builder
 
 # Default entrypoint
-ENTRYPOINT ["/usr/bin/buildah", "unshare"]
+ENTRYPOINT ["/entrypoint.sh"]

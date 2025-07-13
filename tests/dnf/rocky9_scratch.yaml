@@ -1,0 +1,25 @@
+# build a test rocky9 based image from scratch
+
+options:
+  layer_type: 'base'
+  name: 'rocky-base'
+  publish_tags: '9.5'
+  pkg_manager: 'dnf'
+  parent: 'scratch'
+  publish_local: true
+
+repos:
+  - alias: 'Rocky_9_BaseOS'
+    url: 'https://dl.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/'
+    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+  - alias: 'Rocky_9_AppStream'
+    url: 'https://dl.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/'
+    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+
+package_groups:
+  - 'Minimal Install'
+
+packages:
+  - kernel
+  - wget
+  - dracut-live
