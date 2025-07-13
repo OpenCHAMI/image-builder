@@ -18,6 +18,7 @@ podman run --rm \
   --cap-add=SETGID \
   --security-opt seccomp=unconfined \
   --security-opt label=disable \
+  --userns=keep-id \
   -v /opt/workdir/images/test-rocky-9.5.yaml:/home/builder/config.yaml \
   ghcr.io/openchami/image-build:latest \
   image-build --config config.yaml --log-level DEBUG
