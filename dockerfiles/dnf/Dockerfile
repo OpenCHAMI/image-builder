@@ -24,7 +24,6 @@ RUN chmod -R 0755 /usr/local/bin/
 COPY entrypoint.sh /entrypoint.sh
 
 # Allow non-root to run buildah commands
-RUN chmod u+s $(command -v newuidmap) $(command -v newgidmap)
 RUN setcap cap_setuid=ep "$(command -v newuidmap)" && \
     setcap cap_setgid=ep "$(command -v newgidmap)" &&\
     chmod 0755 "$(command -v newuidmap)" && \
