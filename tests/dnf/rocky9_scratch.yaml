@@ -1,4 +1,5 @@
 # build a test rocky9 based image from scratch
+
 options:
   layer_type: 'base'
   name: 'rocky-base'
