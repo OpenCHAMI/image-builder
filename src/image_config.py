@@ -43,6 +43,10 @@ class ImageConfig:
     def get_repos(self):
         return self.config_data.get('repos', [])
 
+    def get_oscap_options(self):
+        return self.config_data.get('openscap', [])
+
+
 if __name__ == "__main__":
     config = ImageConfig("ochami-images/base-configs/base.yaml")
     options = config.get_options()
@@ -53,6 +57,7 @@ if __name__ == "__main__":
     remove_packages = config.get_remove_packages()
     commands = config.get_commands()
     copyfiles = config.get_copy_files()
+    oscap_options = config.get_oscap_options()
 
     print("Options: ", options)
     print("Repos: ", repos)
@@ -60,3 +65,4 @@ if __name__ == "__main__":
     print("Packages: ", packages)
     print("Remove Packages: ", remove_packages)
     print("Commands: ", commands)
+    print("OpenSCAP Options: ", oscap_options)
