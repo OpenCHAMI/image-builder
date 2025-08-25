@@ -6,6 +6,7 @@ on:
             - main
         paths:
             - 'dockerfiles/dnf/Dockerfile'
+            - 'dockerfiles/dnf/Dockerfile.el9'
         tags:
             - 'v*.*.*'
     pull_request:
@@ -13,6 +14,7 @@ on:
             - main
         paths:
             - 'dockerfiles/dnf/Dockerfile'
+            - 'dockerfiles/dnf/Dockerfile.el9'
     workflow_dispatch:
 
 jobs:
