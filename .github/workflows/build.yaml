@@ -55,6 +55,11 @@ jobs:
             TAG="test"
           fi
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.repository_owner }}" == "openchami" ]]; then
+            echo "push=true" >> $GITHUB_OUTPUT
+          else
+            echo "push=false" >> $GITHUB_OUTPUT
+          fi
           echo "Computed tag: ${TAG}"
       
       - name: Build and push Docker image
@@ -64,7 +69,7 @@ jobs:
         with:
           context: .
           file: dockerfiles/dnf/Dockerfile
-          push: true
+          push: ${{ steps.set_tag.outputs.push }}
           tags: ghcr.io/openchami/image-build:${{ steps.set_tag.outputs.tag }}
 
       - name: Build and push Docker image (EL9)
@@ -74,7 +79,7 @@ jobs:
         with:
           context: .
           file: dockerfiles/dnf/Dockerfile.el9
-          push: true
+          push: ${{ steps.set_tag.outputs.push }}
           tags: ghcr.io/openchami/image-build-el9:${{ steps.set_tag.outputs.tag }}
 
       - name: Generate release notes
