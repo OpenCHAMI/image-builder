@@ -29,9 +29,6 @@ class Installer:
 
         logging.info(f"REPOS: Installing these repos to {self.cname}")
 
-        # create repo directory, if needed
-        os.makedirs(os.path.join(self.mname, pathmod.sep_strip(repo_dest)), exist_ok=True)
-
         for r in repos:
             args = []
             logging.info(r['alias'] + ': ' + r['url'])

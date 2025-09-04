@@ -1,4 +1,5 @@
 from datetime import datetime
+import pathmod
 import sys
 import os
 # written modules
@@ -41,6 +42,7 @@ class Layer:
             repo_dest = "/etc/zypp/repos.d"
         elif self.args['pkg_man'] == "dnf":
             repo_dest = "/usr/local/share/yum.repos.d"
+            os.makedirs(os.path.join(mname, pathmod.sep_strip(repo_dest)), exist_ok=True)
         else:
             self.logger.error("unsupported package manager")
 
