@@ -28,7 +28,6 @@ class Installer:
             return
 
         logging.info(f"REPOS: Installing these repos to {self.cname}")
-
         for r in repos:
             args = []
             logging.info(r['alias'] + ': ' + r['url'])
