@@ -1,6 +1,5 @@
 from datetime import datetime
 import pathmod
-import stat
 import sys
 import os
 # written modules
@@ -44,12 +43,13 @@ class Layer:
         elif self.args['pkg_man'] == "dnf":
             repo_dest = "/usr/local/share/yum.repos.d"
 
-            # Create repo dest, if needed
+            # Create repo dir, if needed
             os.makedirs(os.path.join(mname, pathmod.sep_strip(repo_dest)), exist_ok=True)
 
-            # Create dnf.conf file
+            # Create dnf.conf file, if needed
             os.makedirs(os.path.join(mname, "etc/dnf"), exist_ok=True)
-            os.mknod(os.path.join(mname, "etc/dnf/dnf.conf"), mode=0o644)
+            if not os.path.exists(os.path.join(mname, "etc/dnf/dnf.conf")):
+                os.mknod(os.path.join(mname, "etc/dnf/dnf.conf"), mode=0o644)
 
             ## Add repo directory path to dnf.conf
             dnf_conf = open(os.path.join(mname, "etc/dnf/dnf.conf"), "a")
