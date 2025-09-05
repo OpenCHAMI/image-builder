@@ -51,11 +51,28 @@ class Layer:
             if not os.path.exists(os.path.join(mname, "etc/dnf/dnf.conf")):
                 os.mknod(os.path.join(mname, "etc/dnf/dnf.conf"), mode=0o644)
 
-            ## Add repo directory path to dnf.conf
-            dnf_conf = open(os.path.join(mname, "etc/dnf/dnf.conf"), "a")
-            dnf_conf.write("[main]\n")
-            dnf_conf.write("reposdir=" + repo_dest)
+            # Add repo directory path to dnf.conf, if needed
+            # Collect the contents of the file
+            dnf_conf = open(os.path.join(mname, "etc/dnf/dnf.conf"), "r")
+            dnf_conf_contents = dnf_conf.readlines()
             dnf_conf.close()
+
+            ## If repodir line does not exists, add it
+            if not str("reposdir=" + repo_dest + "\n") in dnf_conf_contents:
+                ## If there is "[main]" section, add just the repodir
+                dnf_conf = open(os.path.join(mname, "etc/dnf/dnf.conf"), "a")
+                line_not_found = True
+                for line in dnf_conf_contents:
+                    if "[main]\n" == line:
+                        line = line + "reposdir=" + repo_dest + "\n"
+                        line_not_found = False
+                        dnf_conf.write(line)
+                        break
+                ## Otherwise, add "[main]" and reposdir line
+                if line_not_found:
+                    dnf_conf.write("[main]\n" + "reposdir=" + repo_dest + "\n")
+
+                dnf_conf.close()
 
         else:
             self.logger.error("unsupported package manager")
