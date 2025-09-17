@@ -1,5 +1,5 @@
-ansible
-ansible-base
+ansible>=2.10,<2.12
+ansible-base>=2.10,<2.12
 ansible-bender
 boto3
 dnspython
