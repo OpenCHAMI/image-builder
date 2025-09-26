@@ -56,7 +56,7 @@ RUN rm -f /etc/containers/mounts.conf
 
 # install ansible-bender
 #RUN pip3.11 --proxy=http://192.12.184.19:8080 install ansible==4.10.0 ansible-base==2.10.17 ansible-bender boto3 dnspython requests jinja2_ansible_filters
-RUN pip3.11 --proxy=http://192.12.184.19:8080 install ansible ansible-base ansible-bender boto3 dnspython requests jinja2_ansible_filters
+RUN pip3.11 --proxy=http://192.12.184.19:8080 install ansible ansible-bender boto3 dnspython requests jinja2_ansible_filters
 
 RUN echo "%_netsharedpath /dev" >> /etc/rpm/macros
 
