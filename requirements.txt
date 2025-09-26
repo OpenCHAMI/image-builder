@@ -1,5 +1,4 @@
-ansible
-ansible-base
+ansible>=6.0.0
 ansible-bender
 boto3
 dnspython

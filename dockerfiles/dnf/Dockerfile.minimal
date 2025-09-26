@@ -36,7 +36,7 @@ ENV BUILDAH_ISOLATION=chroot
 # Switch to non-root user
 # Verify Python functionality
 RUN python3.11 -m pip install --no-cache-dir --upgrade pip && \
-    python3.11 -m pip install --no-cache-dir PyYAML ansible==11.1.0 ansible-base ansible-bender boto3 dnspython requests jinja2_ansible_filters
+    python3.11 -m pip install --no-cache-dir PyYAML ansible==11.1.0 ansible-bender boto3 dnspython requests jinja2_ansible_filters
 
 
 # Default entrypoint
