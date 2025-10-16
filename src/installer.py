@@ -205,10 +205,10 @@ class Installer:
             logging.info(r['alias'] + ': ' + r['url'])
             if self.pkg_man == "zypper":
                 if 'priority' in r:
-                    priority = str(r['priority'])
+                    priority = r['priority']
                 else:
                     priority = '99'
-                rargs = ' addrepo -f -p ' + priority + ' ' + r['url'] + ' ' + r['alias']
+                rargs = ' addrepo -f -p ' + str(priority) + ' ' + r['url'] + ' ' + r['alias']
             elif self.pkg_man == "dnf":
                 rargs = ' config-manager --save --add-repo ' + r['url']
 
