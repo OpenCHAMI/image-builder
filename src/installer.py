@@ -39,7 +39,7 @@ class Installer:
                 args.append("-f")
                 args.append("-p")
                 if 'priority' in r:
-                    args.append(r['priority'])
+                    args.append(str(r['priority']))
                 else:
                     args.append('99')
                 args.append(r['url'])
@@ -205,9 +205,9 @@ class Installer:
             logging.info(r['alias'] + ': ' + r['url'])
             if self.pkg_man == "zypper":
                 if 'priority' in r:
-                    priority = r['priority']
+                    priority = str(r['priority'])
                 else:
-                    priority = 99
+                    priority = '99'
                 rargs = ' addrepo -f -p ' + priority + ' ' + r['url'] + ' ' + r['alias']
             elif self.pkg_man == "dnf":
                 rargs = ' config-manager --save --add-repo ' + r['url']
@@ -254,7 +254,7 @@ class Installer:
                 pkg_cmd.append('--nogpgcheck')
             elif self.pkg_man == 'zypper':
                 pkg_cmd.append('--no-gpg-checks')
-        args.append(" ".join(pkg_cmd + [ 'install', '-y'] + packages))
+        args.append(" ".join(pkg_cmd + [ '--gpg-auto-import-keys', 'install', '-y'] + packages))
         cmd(["buildah","run"] + args)
 
     def install_package_groups(self, package_groups):
