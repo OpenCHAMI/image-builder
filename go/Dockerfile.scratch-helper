@@ -1,0 +1,7 @@
+FROM docker.io/library/almalinux:8.8
+
+RUN dnf clean all && \
+    dnf update --nogpgcheck -y && \
+    dnf install -y epel-release && \
+    dnf config-manager -y --set-enabled powertools
+
