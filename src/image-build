@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--log-level', dest="log_level", default=DEFAULT_LOGGING, required=False)
     parser.add_argument('--name', type=str)
     parser.add_argument('--parent', type=str)
+    parser.add_argument('--force-installroot', dest="force_installroot", type=bool, required=False)
     parser.add_argument('--proxy', dest="proxy", type=str, required=False)
     parser.add_argument('--publish-s3', dest="publish_s3", type=str, required=False)
     parser.add_argument('--publish-registry', dest="publish_registry", type=str, required=False)

@@ -21,6 +21,7 @@ class Layer:
         # Set local variables
         dt_string = datetime.now().strftime("%Y%m%d%H%M%S")
         parent = self.args['parent']
+        force_installroot = self.args['force_installroot']
         container = self.args['name']
         registry_opts_pull = self.args['registry_opts_pull']
         package_manager = self.args['pkg_man']
@@ -43,7 +44,7 @@ class Layer:
         cname = out[0]
 
         # Only mount when doing a scratch install
-        if parent == "scratch":
+        if parent == "scratch" or force_installroot == True:
             out = []
             cmd(["buildah", "mount"] + [cname], stdout_handler = buildah_handler)
             mname = out[0]
@@ -103,7 +104,7 @@ class Layer:
 
         # Install Repos
         try:
-            if parent == "scratch":
+            if parent == "scratch" or force_installroot == True:
                 inst.install_scratch_repos(repos, repo_dest, proxy)
             else:
                 inst.install_repos(repos, proxy)
@@ -118,7 +119,7 @@ class Layer:
 
         # Install Packages
         try:
-            if parent == "scratch":
+            if parent == "scratch" or force_installroot == True:
                 # Enable modules
                 inst.install_scratch_modules(modules, repo_dest, self.args['proxy'])
                 # Base Package Groups

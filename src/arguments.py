@@ -43,6 +43,7 @@ def process_args(terminal_args, config_options):
                        4 (-vvvv):   Enables connection debugging, providing a deep dive into network communication."""
             )
     processed_args['parent'] = terminal_args.parent or config_options.get('parent', 'scratch')
+    processed_args['force_installroot'] = terminal_args.force_installroot or config_options.get('force_installroot', False)
     processed_args['proxy'] = terminal_args.proxy or config_options.get('proxy', '')
 
     processed_args['name'] = terminal_args.name or config_options.get('name', 'base')
