@@ -19,6 +19,7 @@ def _generate_labels(args):
     labels['org.openchami.image.name'] = args['name']
     labels['org.openchami.image.type'] = args['layer_type']
     labels['org.openchami.image.parent'] = args['parent']
+    labels['org.openchami.image.arch'] = args['architecture']
     if 'pkg_man' in args:
         labels['org.openchami.image.package-manager'] = args['pkg_man']
     
@@ -71,6 +72,9 @@ def publish(cname, args):
                 cmd(["buildah", "config"] + label_args + [cname], stderr_handler=logging.warn)
             cmd(["buildah","commit", cname, layer_name+':'+tag], stderr_handler=logging.warn)
 
+            image_name = layer_name+':'+tag
+
+
     if args['publish_s3']:
         s3_prefix = args['s3_prefix']
         s3_bucket = args['s3_bucket']
@@ -81,24 +85,26 @@ def publish(cname, args):
     if args['publish_registry']:
         registry_opts = args['registry_opts_push']
         publish_dest = args['publish_registry']
+        arch = args['architecture']
         print("Publishing to registry at " + publish_dest)
         image_name = layer_name+':'+publish_tags[0]
+
         # Add labels if they exist
         if labels:
             label_args = []
             for key, value in labels.items():
                 label_args.extend(['--label', f'{key}={value}'])
             cmd(["buildah", "config"] + label_args + [cname], stderr_handler=logging.warn)
-        cmd(["buildah", "commit", cname, image_name], stderr_handler=logging.warn)
+        cmd(["buildah", "commit", cname, f'{image_name}-{arch}'], stderr_handler=logging.warn)
         for tag in publish_tags:
-            cmd(["buildah", "tag", image_name, layer_name+':'+tag], stderr_handler=logging.warn)
-            registry_push(layer_name, registry_opts, tag, publish_dest)
+            cmd(["buildah", "tag", f'{image_name}-{arch}', layer_name+':'+f'{tag}-{arch}'], stderr_handler=logging.warn)
+            registry_push(layer_name, registry_opts, tag, publish_dest, arch)
 
     # Clean up
     cmd(["buildah", "rm", cname], stderr_handler=logging.warn)
     if not args['publish_local'] and args['publish_registry']:
         for tag in publish_tags:
-            cmd(["buildah","rmi", layer_name+':'+tag], stderr_handler=logging.warn)
+            cmd(["buildah","rmi", layer_name+':'+f'{tag}-{arch}'], stderr_handler=logging.warn)
     if not parent == "scratch":
         cmd(["buildah", "rmi", parent], stderr_handler=logging.warn)
 
@@ -175,8 +181,24 @@ def s3_push(cname, layer_name, credentials, publish_tags, s3_prefix, s3_bucket):
         push_file(mdir+'/boot/'+vmlinuz, 'efi-images/' + s3_prefix + vmlinuz, s3, s3_bucket)
         push_file(tmpdir + '/rootfs', image_name, s3, s3_bucket)
 
-def registry_push(layer_name, registry_opts, publish_tags, registry_endpoint):
+def registry_push(layer_name, registry_opts, publish_tags, registry_endpoint, arch):
+
+    # Push boot image to registry
     image_name = layer_name+':'+publish_tags
-    print("pushing layer " + layer_name + " to " + registry_endpoint +'/'+image_name)
-    args = registry_opts + [image_name, registry_endpoint +'/'+image_name]
+    print("Pushing layer " + layer_name + " to " + registry_endpoint +'/'+f'{image_name}-{arch}')
+    args = registry_opts + [f'{image_name}-{arch}', registry_endpoint +'/'+f'{image_name}-{arch}']
     cmd(["buildah", "push"] + args, stderr_handler=logging.warn)
+
+    # Create a tmp manifest
+    manifest_name = f"{registry_endpoint}/{image_name}"
+    cmd(["buildah", "manifest", "create"] + registry_opts + [manifest_name], stderr_handler=logging.warn)
+
+    # Update manifest and push
+    manifest_add_args = registry_opts + [manifest_name, f"docker://{manifest_name}-{arch}"]
+    cmd(["buildah", "manifest", "add"] + manifest_add_args, stderr_handler=logging.warn)
+    
+    print(f"Pushing manifest {manifest_name}")
+    cmd(["buildah", "manifest", "push", "--all"] + registry_opts + [manifest_name, f"docker://{manifest_name}"])
+
+    print(f"Manifest pushed. Removing local manifest {manifest_name}")
+    cmd(["buildah", "manifest", "rm", manifest_name])
