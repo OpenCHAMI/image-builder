@@ -42,6 +42,18 @@ class Layer:
         cmd(["buildah", "from"] + registry_opts_pull + ["--name", container + dt_string, parent], stdout_handler = buildah_handler)
         cname = out[0]
 
+        # Copy Files
+        try:
+            inst.install_copyfiles(copyfiles)
+        except Exception as e:
+            self.logger.error(f"Error running commands: {e}")
+            cmd(["buildah","rm"] + [cname])
+            sys.exit("Exiting now")
+        except KeyboardInterrupt:
+            self.logger.error(f"Keyboard Interrupt")
+            cmd(["buildah","rm"] + [cname])
+            sys.exit("Exiting now ...")
+
         # Only mount when doing a scratch install
         if parent == "scratch":
             out = []
@@ -134,18 +146,6 @@ class Layer:
             self.logger.error(f"Error installing packages: {e}")
             cmd(["buildah","rm"] + [cname])
             sys.exit("Exiting now ...")
-        except KeyboardInterrupt:
-            self.logger.error(f"Keyboard Interrupt")
-            cmd(["buildah","rm"] + [cname])
-            sys.exit("Exiting now ...")
-
-        # Copy Files
-        try:
-            inst.install_copyfiles(copyfiles)
-        except Exception as e:
-            self.logger.error(f"Error running commands: {e}")
-            cmd(["buildah","rm"] + [cname])
-            sys.exit("Exiting now")
         except KeyboardInterrupt:
             self.logger.error(f"Keyboard Interrupt")
             cmd(["buildah","rm"] + [cname])
