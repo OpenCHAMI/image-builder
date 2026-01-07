@@ -62,6 +62,10 @@ options:
 
   # Distribution flavor of image.
   pkg_manager: 'dnf'
+  # DNF options to use
+  dnf_options:
+    - 'gpgcheck=0'
+    - 'keepcache=1'
 
   # Starting filesystem of image. 'scratch' means to start with a blank
   # filesystem. Currently, only OCI images can be used as parents. In

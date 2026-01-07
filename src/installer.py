@@ -3,6 +3,7 @@ import logging
 import os
 import pathmod
 import tempfile
+import sys
 # Written Modules
 from utils import cmd
 
@@ -22,7 +23,7 @@ class Installer:
             # DNF complains if the log directory is not present
             os.makedirs(os.path.join(self.tdir, "dnf/log"))
 
-    def install_scratch_repos(self, repos, repo_dest, proxy):
+    def install_scratch_repos(self, repos, repo_dest, proxy, dnf_options):
         # check if there are repos passed for install
         if len(repos) == 0:
             logging.info("REPOS: no repos passed to install\n")
@@ -45,17 +46,24 @@ class Installer:
                 args.append(r['url'])
                 args.append(r['alias'])
             elif self.pkg_man == "dnf":
-                args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(repo_dest)))
-                args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-                args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
+                defaults = {
+                    "reposdir": os.path.join(self.mname, pathmod.sep_strip(repo_dest)),
+                    "logdir": os.path.join(self.tdir, self.pkg_man, "log"),
+                    "cachedir": os.path.join(self.tdir, self.pkg_man, "cache")
+                }
                 if proxy != "":
-                    args.append("--setopt=proxy="+proxy)
+                    defaults["proxy"] = proxy
+                config_path = self.generate_config(defaults, dnf_options)
+
+                args.append(f"-c={config_path}")
                 args.append("config-manager")
                 args.append("--save")
                 args.append("--add-repo")
                 args.append(r['url'])
 
             rc = cmd([self.pkg_man] + args)
+            # Remove Temp config
+            os.remove(config_path)
             if rc != 0:
                 raise Exception("Failed to install repo", r['alias'], r['url'])
 
@@ -66,16 +74,25 @@ class Installer:
                     repo_name = r['url'].split('https://')[1].replace('/','_')
                 elif r['url'].startswith('http'):
                     repo_name = r['url'].split('http://')[1].replace('/','_')
+
+                defaults = {
+                    "reposdir": os.path.join(self.mname, pathmod.sep_strip(repo_dest)),
+                    "logdir": os.path.join(self.tdir, self.pkg_man, "log"),
+                    "cachedir": os.path.join(self.tdir, self.pkg_man, "cache")
+                }
+                if proxy != "":
+                    defaults["proxy"] = proxy
+                config_path = self.generate_config(defaults, dnf_options)
+
                 args = []
                 args.append('config-manager')
                 args.append('--save')
-                args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(repo_dest)))
-                args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-                args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
-                args.append('--setopt=*.proxy='+proxy)
+                args.append(f"-c={config_path}")
                 args.append(repo_name)
 
                 rc = cmd([self.pkg_man] + args)
+                # Remove Temp config
+                os.remove(config_path)
                 if rc != 0:
                     raise Exception("Failed to set proxy for repo", r['alias'], r['url'], proxy)
 
@@ -93,7 +110,7 @@ class Installer:
                 if rc != 0:
                     raise Exception("Failed to install gpg key for", r['alias'], "at URL", r['gpg'])
 
-    def install_scratch_packages(self, packages, registry_loc, proxy):
+    def install_scratch_packages(self, packages, registry_loc, proxy, dnf_options):
         # check if there are packages to install
         if len(packages) == 0:
             logging.warn("PACKAGES: no packages passed to install\n")
@@ -116,11 +133,17 @@ class Installer:
             args.append("-l")
             args.extend(packages)
         elif self.pkg_man == "dnf":
-            args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
-            args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-            args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
+
+            defaults = {
+                "reposdir": os.path.join(self.mname, pathmod.sep_strip(registry_loc)),
+                "logdir": os.path.join(self.tdir, self.pkg_man, "log"),
+                "cachedir": os.path.join(self.tdir, self.pkg_man, "cache")
+            }
             if proxy != "":
-                args.append("--setopt=proxy="+proxy)
+                defaults["proxy"] = proxy
+            config_path = self.generate_config(defaults, dnf_options)
+
+            args.append(f"-c={config_path}")
             args.append("install")
             args.append("-y")
             args.append("--nogpgcheck")
@@ -129,13 +152,15 @@ class Installer:
             args.extend(packages)
 
         rc = cmd([self.pkg_man] + args)
+        # Remove Temp config
+        os.remove(config_path)
         if rc == 104:
             raise Exception("Installing base packages failed")
 
         if rc == 107:
             logging.warn("one or more RPM postscripts failed to run")
 
-    def install_scratch_package_groups(self, package_groups, registry_loc, proxy):
+    def install_scratch_package_groups(self, package_groups, registry_loc, proxy, dnf_options):
         # check if there are packages groups to install
         if len(package_groups) == 0:
             logging.warn("PACKAGE GROUPS: no package groups passed to install\n")
@@ -148,11 +173,16 @@ class Installer:
         if self.pkg_man == "zypper":
             logging.warn("zypper does not support package groups")
         elif self.pkg_man == "dnf":
-            args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
-            args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-            args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
+            defaults = {
+                "reposdir": os.path.join(self.mname, pathmod.sep_strip(registry_loc)),
+                "logdir": os.path.join(self.tdir, self.pkg_man, "log"),
+                "cachedir": os.path.join(self.tdir, self.pkg_man, "cache")
+            }
             if proxy != "":
-                args.append("--setopt=proxy="+proxy)
+                defaults["proxy"] = proxy
+            config_path = self.generate_config(defaults, dnf_options)
+
+            args.append(f"-c={config_path}")
             args.append("groupinstall")
             args.append("-y")
             args.append("--nogpgcheck")
@@ -161,10 +191,12 @@ class Installer:
             args.extend(package_groups)
 
         rc = cmd([self.pkg_man] + args)
+        # Remove Temp config
+        os.remove(config_path)
         if rc == 104:
             raise Exception("Installing base packages failed")
-
-    def install_scratch_modules(self, modules, registry_loc, proxy):
+        
+    def install_scratch_modules(self, modules, registry_loc, proxy, dnf_options):
         # check if there are modules groups to install
         if len(modules) == 0:
             logging.warn("PACKAGE MODULES: no modules passed to install\n")
@@ -178,11 +210,16 @@ class Installer:
                 logging.warn("zypper does not support package groups")
                 return
             elif self.pkg_man == "dnf":
-                args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
-                args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-                args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
+                defaults = {
+                    "reposdir": os.path.join(self.mname, pathmod.sep_strip(registry_loc)),
+                    "logdir": os.path.join(self.tdir, self.pkg_man, "log"),
+                    "cachedir": os.path.join(self.tdir, self.pkg_man, "cache")
+                }
                 if proxy != "":
-                    args.append("--setopt=proxy="+proxy)
+                    defaults["proxy"] = proxy
+                config_path = self.generate_config(defaults, dnf_options)
+
+                args.append(f"-c={config_path}")
                 args.append("module")
                 args.append(mod_cmd)
                 args.append("-y")
@@ -191,10 +228,12 @@ class Installer:
                 args.append(self.mname)
                 args.extend(mod_list)
             rc = cmd([self.pkg_man] + args)
+            # Remove Temp config
+            os.remove(config_path)
             if rc != 0:
                 raise Exception("Failed to run module cmd", mod_cmd, ' '.join(mod_list))
             
-    def install_repos(self, repos, proxy):
+    def install_repos(self, repos, proxy, dnf_options):
         # check if there are repos passed for install
         if len(repos) == 0:
             logging.info("REPOS: no repos passed to install\n")
@@ -321,3 +360,26 @@ class Installer:
             logging.info(f['src'] + ' -> ' + f['dest'])
             args +=  [ self.cname, f['src'], f['dest'] ]
             cmd(["buildah","copy"] + args)
+
+    def generate_config(self, defaults, dnf_opts):
+        _, config_path = tempfile.mkstemp(prefix='temp-dnf-conf-')
+        dnf_opt_dict = {}
+
+        for option in dnf_opts:
+            key, value = option.split('=')
+            dnf_opt_dict[key] = value
+        
+        try:
+            file = open(config_path, 'w')
+            file.write('[main]\n')
+            for key in dnf_opt_dict:
+                file.write(f'{key}={dnf_opt_dict[key]}\n')
+
+            for key in defaults:
+                if key not in dnf_opt_dict.keys():
+                    file.write(f'{key}={defaults[key]}\n')
+            file.close()
+        except Exception as e: 
+            logging.error(f"Could not create a temporary dnf config file: {e}")
+
+        return config_path

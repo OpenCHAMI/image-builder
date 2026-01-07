@@ -33,6 +33,8 @@ class Layer:
         else:
             proxy = ""
 
+        dnf_options = self.args['dnf_options']
+
         # container and mount name
         def buildah_handler(line):
             out.append(line)
@@ -54,7 +56,12 @@ class Layer:
         if package_manager == "zypper":
             repo_dest = "/etc/zypp/repos.d"
         elif package_manager == "dnf":
+            # When "minimal install" group is installed, it stores .repo files in the default /etc/yum.repos.d location
+            # this sometimes creates an issue where dnf will start using the latest versions of packages instead of the
+            # ones defined in the config file. Adding a different repo location to dnf.conf fixes that issue since 
+            # /etc/yum.repos.d is hard coded by packages in "minimal install" group.
             repo_dest = os.path.expanduser("~/.pkg_repos/yum.repos.d")
+
             # Create repo dest, if needed
             os.makedirs(os.path.join(mname, pathmod.sep_strip(repo_dest)), exist_ok=True)
 
@@ -64,27 +71,20 @@ class Layer:
                 os.mknod(os.path.join(mname, "etc/dnf/dnf.conf"), mode=0o644)
 
             # Add repo directory path to dnf.conf, if needed
-            # Collect the contents of the file
-            dnf_conf = open(os.path.join(mname, "etc/dnf/dnf.conf"), "r")
-            dnf_conf_contents = dnf_conf.readlines()
-            dnf_conf.close()
-
-            ## If repodir line does not exists, add it
-            if not str("reposdir=" + repo_dest + "\n") in dnf_conf_contents:
-                ## If there is "[main]" section, add just the repodir
-                dnf_conf = open(os.path.join(mname, "etc/dnf/dnf.conf"), "a")
-                line_not_found = True
-                for line in dnf_conf_contents:
-                    if "[main]\n" == line:
-                        line = line + "reposdir=" + repo_dest + "\n"
-                        line_not_found = False
-                        dnf_conf.write(line)
-                        break
-                ## Otherwise, add "[main]" and reposdir line
-                if line_not_found:
-                    dnf_conf.write("[main]\n" + "reposdir=" + repo_dest + "\n")
-
+            try:
+                # Collect the contents of the file
+                dnf_conf = open(os.path.join(mname, "etc/dnf/dnf.conf"), "a+")
+                dnf_conf_contents = dnf_conf.readlines()
+                if not str("reposdir=" + repo_dest + "\n") in dnf_conf_contents:
+                    ## If there is "[main]" section, add just the repodir
+                    if "[main]\n" in dnf_conf_contents:
+                        dnf_conf.write("reposdir=" + repo_dest + "\n")
+                    ## Otherwise, add "[main]" and reposdir line
+                    else:
+                        dnf_conf.write("[main]\n" + "reposdir=" + repo_dest + "\n")
                 dnf_conf.close()
+            except Exception as e:
+                logging.error("Could not update the contents of dnf.conf: {e}")
 
         else:
             self.logger.error("unsupported package manager")
@@ -104,9 +104,9 @@ class Layer:
         # Install Repos
         try:
             if parent == "scratch":
-                inst.install_scratch_repos(repos, repo_dest, proxy)
+                inst.install_scratch_repos(repos, repo_dest, proxy, dnf_options)
             else:
-                inst.install_repos(repos, proxy)
+                inst.install_repos(repos, proxy, dnf_options)
         except Exception as e:
             self.logger.error(f"Error installing repos: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -120,11 +120,11 @@ class Layer:
         try:
             if parent == "scratch":
                 # Enable modules
-                inst.install_scratch_modules(modules, repo_dest, self.args['proxy'])
+                inst.install_scratch_modules(modules, repo_dest, proxy, dnf_options)
                 # Base Package Groups
-                inst.install_scratch_package_groups(package_groups, repo_dest, proxy)
+                inst.install_scratch_package_groups(package_groups, repo_dest, proxy, dnf_options)
                 # Packages
-                inst.install_scratch_packages(packages, repo_dest, proxy)
+                inst.install_scratch_packages(packages, repo_dest, proxy, dnf_options)
             else:
                 inst.install_package_groups(package_groups)
                 inst.install_packages(packages)
