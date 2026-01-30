@@ -28,13 +28,11 @@ class Installer:
             return
 
         for r in repos:
-            logging.info(r['alias'])
-
             alias = r['alias']
             config = r['config'].lstrip()
 
             # Makes sure configs start with an alias
-            if not config.startswith(f'[{alias}]'):
+            if not config.startswith(f'['):
                 config = f'[{alias}]\n{config}'
 
             repo_path = Path(*[self.mname, pathmod.sep_strip(repo_dest), f'{alias}.repo'])
@@ -57,11 +55,13 @@ class Installer:
 
         args = []
         if self.pkg_man == "zypper":
+            args.append("--non-interactive")
             args.append("-n")
             args.append("-D")
             args.append(os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
             args.append("-C")
             args.append(self.tdir)
+            args.append('--no-gpg-checks')
             args.append("--installroot")
             args.append(self.mname)
             args.append("install")
@@ -140,7 +140,7 @@ class Installer:
             config = r['config'].lstrip()
 
             # Makes sure configs start with an alias
-            if not config.startswith(f'[{alias}]'):
+            if not config.startswith(f'['):
                 config = f'[{alias}]\n{config}'
 
             with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:
