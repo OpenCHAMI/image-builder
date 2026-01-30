@@ -1,17 +1,16 @@
-import subprocess
 import logging
 import os
 import pathmod
 import tempfile
+from pathlib import Path
 # Written Modules
 from utils import cmd
 
 class Installer:
-    def __init__(self, pkg_man, cname, mname, gpgcheck=True):
+    def __init__(self, pkg_man, cname, mname):
         self.pkg_man = pkg_man
         self.cname = cname
         self.mname = mname
-        self.gpgcheck = gpgcheck
 
         # Create temporary directory for logs, cache, etc. for package manager
         os.makedirs(os.path.join(mname, "tmp"), exist_ok=True)
@@ -22,78 +21,32 @@ class Installer:
             # DNF complains if the log directory is not present
             os.makedirs(os.path.join(self.tdir, "dnf/log"))
 
-    def install_scratch_repos(self, repos, repo_dest, proxy):
+    def install_scratch_repos(self, repos, repo_dest):
         # check if there are repos passed for install
         if len(repos) == 0:
             logging.info("REPOS: no repos passed to install\n")
             return
 
-        logging.info(f"REPOS: Installing these repos to {self.cname}")
         for r in repos:
-            args = []
-            logging.info(r['alias'] + ': ' + r['url'])
-            if self.pkg_man == "zypper":
-                args.append("-D")
-                args.append(os.path.join(self.mname, pathmod.sep_strip(repo_dest)))
-                args.append("addrepo")
-                args.append("-f")
-                args.append("-p")
-                if 'priority' in r:
-                    args.append(r['priority'])
-                else:
-                    args.append('99')
-                args.append(r['url'])
-                args.append(r['alias'])
-            elif self.pkg_man == "dnf":
-                args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(repo_dest)))
-                args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-                args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
-                if proxy != "":
-                    args.append("--setopt=proxy="+proxy)
-                args.append("config-manager")
-                args.append("--save")
-                args.append("--add-repo")
-                args.append(r['url'])
+            logging.info(r['alias'])
 
-            rc = cmd([self.pkg_man] + args)
-            if rc != 0:
-                raise Exception("Failed to install repo", r['alias'], r['url'])
+            alias = r['alias']
+            config = r['config'].lstrip()
 
-            if proxy != "":
-                if r['url'].endswith('.repo'):
-                    repo_name = r['url'].split('/')[-1].split('.repo')[0] + "*"
-                elif r['url'].startswith('https'):
-                    repo_name = r['url'].split('https://')[1].replace('/','_')
-                elif r['url'].startswith('http'):
-                    repo_name = r['url'].split('http://')[1].replace('/','_')
-                args = []
-                args.append('config-manager')
-                args.append('--save')
-                args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(repo_dest)))
-                args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-                args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
-                args.append('--setopt=*.proxy='+proxy)
-                args.append(repo_name)
+            # Makes sure configs start with an alias
+            if not config.startswith(f'[{alias}]'):
+                config = f'[{alias}]\n{config}'
 
-                rc = cmd([self.pkg_man] + args)
-                if rc != 0:
-                    raise Exception("Failed to set proxy for repo", r['alias'], r['url'], proxy)
+            repo_path = Path(*[self.mname, pathmod.sep_strip(repo_dest), f'{alias}.repo'])
+            try:
+                repo_path.parent.mkdir(parents=True, exist_ok=True)
+                logging.info(f"REPOS: Writing {alias} to {repo_dest}")
+                with open(repo_path, "w") as f:
+                    f.write(config)
+            except Exception as e:
+                raise Exception(f"Failed to generate repo file for r['alias'] got:\n{e}")
 
-            if "gpg" in r:
-                # Using rpm apparently works for both Yum- and Zypper-based distros.
-                args = []
-                if proxy != "":
-                    arg_env = os.environ.copy()
-                    arg_env['https_proxy'] = proxy
-                args.append("--root="+self.mname)
-                args.append("--import")
-                args.append(r["gpg"])
-
-                rc = cmd(["rpm"] + args)
-                if rc != 0:
-                    raise Exception("Failed to install gpg key for", r['alias'], "at URL", r['gpg'])
-
-    def install_scratch_packages(self, packages, registry_loc, proxy):
+    def install_scratch_packages(self, packages, registry_loc):
         # check if there are packages to install
         if len(packages) == 0:
             logging.warn("PACKAGES: no packages passed to install\n")
@@ -109,21 +62,14 @@ class Installer:
             args.append(os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
             args.append("-C")
             args.append(self.tdir)
-            args.append("--no-gpg-checks")
             args.append("--installroot")
             args.append(self.mname)
             args.append("install")
             args.append("-l")
             args.extend(packages)
         elif self.pkg_man == "dnf":
-            args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
-            args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-            args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
-            if proxy != "":
-                args.append("--setopt=proxy="+proxy)
             args.append("install")
             args.append("-y")
-            args.append("--nogpgcheck")
             args.append("--installroot")
             args.append(self.mname)
             args.extend(packages)
@@ -135,7 +81,7 @@ class Installer:
         if rc == 107:
             logging.warn("one or more RPM postscripts failed to run")
 
-    def install_scratch_package_groups(self, package_groups, registry_loc, proxy):
+    def install_scratch_package_groups(self, package_groups):
         # check if there are packages groups to install
         if len(package_groups) == 0:
             logging.warn("PACKAGE GROUPS: no package groups passed to install\n")
@@ -148,14 +94,8 @@ class Installer:
         if self.pkg_man == "zypper":
             logging.warn("zypper does not support package groups")
         elif self.pkg_man == "dnf":
-            args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
-            args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-            args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
-            if proxy != "":
-                args.append("--setopt=proxy="+proxy)
             args.append("groupinstall")
             args.append("-y")
-            args.append("--nogpgcheck")
             args.append("--installroot")
             args.append(self.mname)
             args.extend(package_groups)
@@ -164,7 +104,7 @@ class Installer:
         if rc == 104:
             raise Exception("Installing base packages failed")
 
-    def install_scratch_modules(self, modules, registry_loc, proxy):
+    def install_scratch_modules(self, modules):
         # check if there are modules groups to install
         if len(modules) == 0:
             logging.warn("PACKAGE MODULES: no modules passed to install\n")
@@ -178,15 +118,9 @@ class Installer:
                 logging.warn("zypper does not support package groups")
                 return
             elif self.pkg_man == "dnf":
-                args.append("--setopt=reposdir="+os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
-                args.append("--setopt=logdir="+os.path.join(self.tdir, self.pkg_man, "log"))
-                args.append("--setopt=cachedir="+os.path.join(self.tdir, self.pkg_man, "cache"))
-                if proxy != "":
-                    args.append("--setopt=proxy="+proxy)
                 args.append("module")
                 args.append(mod_cmd)
                 args.append("-y")
-                args.append("--nogpgcheck")
                 args.append("--installroot")
                 args.append(self.mname)
                 args.extend(mod_list)
@@ -194,7 +128,7 @@ class Installer:
             if rc != 0:
                 raise Exception("Failed to run module cmd", mod_cmd, ' '.join(mod_list))
             
-    def install_repos(self, repos, proxy):
+    def install_repos(self, repos, repo_dest):
         # check if there are repos passed for install
         if len(repos) == 0:
             logging.info("REPOS: no repos passed to install\n")
@@ -202,44 +136,32 @@ class Installer:
 
         logging.info(f"REPOS: Installing these repos to {self.cname}")
         for r in repos:
-            logging.info(r['alias'] + ': ' + r['url'])
-            if self.pkg_man == "zypper":
-                if 'priority' in r:
-                    priority = r['priority']
-                else:
-                    priority = 99
-                rargs = ' addrepo -f -p ' + priority + ' ' + r['url'] + ' ' + r['alias']
-            elif self.pkg_man == "dnf":
-                rargs = ' config-manager --save --add-repo ' + r['url']
+            alias = r['alias']
+            config = r['config'].lstrip()
 
-            args = [self.cname, '--', 'bash', '-c', self.pkg_man + rargs]
-            rc = cmd(["buildah","run"] + args)
-            if rc != 0:
-                raise Exception("Failed to install repo", r['alias'], r['url'])
-            # Set Proxy if using DNF
-            if proxy != "":
-                if r['url'].endswith('.repo'):
-                    repo_name = r['url'].split('/')[-1].split('.repo')[0] + "*"
-                elif r['url'].startswith('https'):
-                    repo_name = r['url'].split('https://')[1].replace('/','_')
-                elif r['url'].startswith('http'):
-                    repo_name = r['url'].split('http://')[1].replace('/','_')
-                pargs = ' config-manager --save --setopt=*.proxy= ' + proxy + ' ' + repo_name
+            # Makes sure configs start with an alias
+            if not config.startswith(f'[{alias}]'):
+                config = f'[{alias}]\n{config}'
 
-                args = [self.cname, '--', 'bash', '-c', self.pkg_man + pargs]
-                rc = cmd(["buildah","run"] + args)
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:
+                tmp.write(config)
+                tmp_path = tmp.name
+
+            repo_path = Path(*[repo_dest, f'{alias}.repo'])
+            copy_config = ['buildah', 'copy' , self.cname, tmp_path, repo_path]
+            mkparent_dir = ['buildah', 'run', self.cname, '--', 'mkdir', '-p', repo_dest]
+            try:
+                rc = cmd(mkparent_dir)
                 if rc != 0:
-                    raise Exception("Failed to set proxy for repo", r['alias'], r['url'], proxy)
-
-            if "gpg" in r:
-                # Using rpm apparently works for both Yum- and Zypper-based distros.
-                gargs = [self.cname, '--', 'bash', '-c', 'rpm --import ' + r['gpg']]
-                if proxy != "":
-                    arg_env = os.environ.copy()
-                    arg_env['https_proxy'] = proxy
-                rc = cmd(["buildah","run"] + gargs)
+                    raise Exception(f"Failed to create parent dir {repo_dest}")
+                rc = cmd(copy_config)
                 if rc != 0:
-                    raise Exception("Failed to install gpg key for", r['alias'], "at URL", r['gpg'])
+                    raise Exception(f"Failed to generate repo config at {repo_path}")
+                logging.info(f"REPOS: Writing {alias} to {repo_path}")
+            except Exception as e:
+                raise Exception(f"Failed to generate repo file for r['alias'] got:\n{e}")
+            finally:
+                os.remove(tmp_path)
 
     def install_packages(self, packages):
         if len(packages) == 0:
@@ -249,11 +171,6 @@ class Installer:
         logging.info("\n".join(packages))
         args = [self.cname, '--', 'bash', '-c']
         pkg_cmd =  [self.pkg_man]
-        if self.gpgcheck is not True:
-            if self.pkg_man == 'dnf':
-                pkg_cmd.append('--nogpgcheck')
-            elif self.pkg_man == 'zypper':
-                pkg_cmd.append('--no-gpg-checks')
         args.append(" ".join(pkg_cmd + [ 'install', '-y'] + packages))
         cmd(["buildah","run"] + args)
 
@@ -267,8 +184,6 @@ class Installer:
         pkg_cmd = [self.pkg_man, 'groupinstall', '-y']
         if self.pkg_man == "zypper":
             logging.warn("zypper does not support package groups")
-        if self.gpgcheck is not True:
-            pkg_cmd.append('--nogpgcheck')
         args.append(" ".join(pkg_cmd + [f'"{pg}"' for pg in package_groups]))
         cmd(["buildah","run"] + args)
         
