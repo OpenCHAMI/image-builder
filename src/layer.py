@@ -24,14 +24,6 @@ class Layer:
         container = self.args['name']
         registry_opts_pull = self.args['registry_opts_pull']
         package_manager = self.args['pkg_man']
-        if 'gpgcheck' in self.args:
-            gpgcheck = self.args['gpgcheck']
-        else:
-            gpgcheck = True
-        if 'proxy' in self.args:
-            proxy = self.args['proxy']
-        else:
-            proxy = ""
 
         # container and mount name
         def buildah_handler(line):
@@ -91,7 +83,7 @@ class Layer:
 
         inst = None
         try:
-            inst = installer.Installer(package_manager, cname, mname, gpgcheck)
+            inst = installer.Installer(package_manager, cname, mname)
         except Exception as e:
             self.logger.error(f"Error preparing installer: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -104,9 +96,9 @@ class Layer:
         # Install Repos
         try:
             if parent == "scratch":
-                inst.install_scratch_repos(repos, repo_dest, proxy)
+                inst.install_scratch_repos(repos, repo_dest)
             else:
-                inst.install_repos(repos, proxy)
+                inst.install_repos(repos, repo_dest)
         except Exception as e:
             self.logger.error(f"Error installing repos: {e}")
             cmd(["buildah","rm"] + [cname])
@@ -120,11 +112,11 @@ class Layer:
         try:
             if parent == "scratch":
                 # Enable modules
-                inst.install_scratch_modules(modules, repo_dest, self.args['proxy'])
+                inst.install_scratch_modules(modules)
                 # Base Package Groups
-                inst.install_scratch_package_groups(package_groups, repo_dest, proxy)
+                inst.install_scratch_package_groups(package_groups)
                 # Packages
-                inst.install_scratch_packages(packages, repo_dest, proxy)
+                inst.install_scratch_packages(packages, repo_dest)
             else:
                 inst.install_package_groups(package_groups)
                 inst.install_packages(packages)
