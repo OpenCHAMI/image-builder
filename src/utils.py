@@ -85,14 +85,6 @@ def run_playbook(cnames, ansible_inv, ansible_verbosity):
                 inventory._inventory.set_variable(c, k, v)
 
     variable_manager = VariableManager(loader=loader, inventory=inventory)
-    for c in cnames:
-        logging.info("Vars for host " + c + ":")
-        ansible_vars = variable_manager.get_vars(host=inventory.get_host(c))
-        filtered = {k: v for k, v in ansible_vars.items() if type(v) is not AnsibleVaultEncryptedUnicode}
-        ansible_vars.clear()
-        ansible_vars.update(filtered)
-        formatted_str = json.dumps(ansible_vars, indent=2, default=list)
-        logging.info(formatted_str)
 
     pbs = []
     subset = []
