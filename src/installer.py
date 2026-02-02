@@ -254,6 +254,7 @@ class Installer:
                 pkg_cmd.append('--nogpgcheck')
             elif self.pkg_man == 'zypper':
                 pkg_cmd.append('--no-gpg-checks')
+                pkg_cmd.append('--gpg-auto-import-keys')
         args.append(" ".join(pkg_cmd + [ 'install', '-y'] + packages))
         cmd(["buildah","run"] + args)
 
@@ -271,6 +272,28 @@ class Installer:
             pkg_cmd.append('--nogpgcheck')
         args.append(" ".join(pkg_cmd + [f'"{pg}"' for pg in package_groups]))
         cmd(["buildah","run"] + args)
+
+    def install_modules(self, modules):
+        # check if there are modules groups to install
+        if len(modules) == 0:
+            logging.warn("PACKAGE MODULES: no modules passed to install\n")
+            return
+        logging.info(f"MODULES: Running these module commands for {self.cname}")
+        args = [self.cname, '--', 'bash', '-c']
+        pkg_cmd = [self.pkg_man]
+        for mod_cmd, mod_list in modules.items():
+            logging.info(mod_cmd + ": " + " ".join(mod_list))
+        for mod_cmd, mod_list in modules.items():
+            if self.pkg_man == "zypper":
+                logging.warn("zypper does not support package groups")
+                return
+            elif self.pkg_man == "dnf":
+                pkg_cmd.append("module")
+                pkg_cmd.append(mod_cmd)
+                pkg_cmd.append("-y")
+                pkg_cmd.append("--nogpgcheck")
+            args.append(" ".join(pkg_cmd + mod_list))
+            cmd(["buildah", "run"] + args)
         
     def remove_packages(self, remove_packages):
         # check if there are packages to remove
