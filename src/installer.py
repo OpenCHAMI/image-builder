@@ -171,6 +171,8 @@ class Installer:
         logging.info("\n".join(packages))
         args = [self.cname, '--', 'bash', '-c']
         pkg_cmd =  [self.pkg_man]
+        if self.pkg_man == zypper:
+          pkg_cmd.append('--gpg-auto-import-keys')
         args.append(" ".join(pkg_cmd + [ 'install', '-y'] + packages))
         cmd(["buildah","run"] + args)
 

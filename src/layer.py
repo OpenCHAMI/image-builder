@@ -46,7 +46,7 @@ class Layer:
         if package_manager == "zypper":
             repo_dest = "/etc/zypp/repos.d"
         elif package_manager == "dnf":
-            repo_dest = os.path.expanduser("~/.pkg_repos/yum.repos.d")
+            repo_dest = os.path.expanduser("/etc/imgbuild/yum.repos.d")
             # Create repo dest, if needed
             os.makedirs(os.path.join(mname, pathmod.sep_strip(repo_dest)), exist_ok=True)
 
