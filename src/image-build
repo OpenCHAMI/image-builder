@@ -44,7 +44,6 @@ def main():
     parser.add_argument('--oval-eval', dest="oval_eval", action='store_true', required=False)
     parser.add_argument('--install-scap', dest="install_scap", action='store_true', required=False)
 
-
     try:
         terminal_args = parser.parse_args()
 
