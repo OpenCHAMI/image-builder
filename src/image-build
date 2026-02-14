@@ -43,6 +43,7 @@ def main():
     parser.add_argument('--scap-benchmark', dest="scap_benchmark", action='store_true', required=False)
     parser.add_argument('--oval-eval', dest="oval_eval", action='store_true', required=False)
     parser.add_argument('--install-scap', dest="install_scap", action='store_true', required=False)
+    parser.add_argument('--dnf-options', dest="dnf_options", action='store', nargs='+', type=str, default=[], required=False, help='List of dnf options')
 
 
     try:
