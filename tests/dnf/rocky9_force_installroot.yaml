@@ -1,0 +1,27 @@
+options:
+  layer_type: 'base'
+  name: 'rocky-base'
+  publish_tags: '9.5'
+  pkg_manager: 'dnf'
+  parent: 'docker.io/rockylinux:9'
+  publish_local: true
+  force_installroot: true
+
+repos:
+  - alias: 'kubernetes'
+    url: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/"
+    gpg: "https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key"
+  - alias: 'containerd'
+    url: "https://download.docker.com/linux/centos/docker-ce.repo"
+  - alias: 'Rocky_9_BaseOS'
+    url: 'https://dl.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/'
+    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+  - alias: 'Rocky_9_AppStream'
+    url: 'https://dl.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/'
+    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'      
+
+packages:
+  - kubelet
+  - kubeadm
+  - kubectl
+  - containerd
