@@ -118,6 +118,7 @@ class Layer:
                 # Packages
                 inst.install_scratch_packages(packages, repo_dest)
             else:
+                inst.install_modules(modules)
                 inst.install_package_groups(package_groups)
                 inst.install_packages(packages)
             # Remove Packages
