@@ -122,13 +122,25 @@ options:
 # Package repositories to add. This example uses YUM/DNF repositories.
 repos:
   - alias: 'rocky-baseos'
-    url: 'http://dl.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os'
-  - alias: 'rock_appstream'
-    url: 'http://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os'
-  - alias: 'rock_powertools'
-    url: 'http://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os'
+    content: |
+      name=rocky-baseos
+      baseurl='http://dl.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os'
+      enabled=1
+  - alias: 'rocky-appstream'
+    content: |
+      name=rocky-appstream
+      baseurl='http://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os'
+      enabled=1
+  - alias: 'rocky-powertools'
+    content: |
+      name=rocky-appstream
+      baseurl='http://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os'
+      enabled=1
   - alias: 'epel'
-    url: 'http://dl.fedoraproject.org/pub/epel/8/Everything/x86_64/'
+    content: |
+      name=epel
+      baseurl='http://dl.fedoraproject.org/pub/epel/8/Everything/x86_64/'
+      enabled=1
 
 # Package groups to install, in this example YUM/DNF package groups.
 package_groups:
