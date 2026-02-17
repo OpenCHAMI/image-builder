@@ -61,7 +61,6 @@ class Installer:
             args.append(os.path.join(self.mname, pathmod.sep_strip(registry_loc)))
             args.append("-C")
             args.append(self.tdir)
-            args.append('--no-gpg-checks')
             args.append("--installroot")
             args.append(self.mname)
             args.append("install")
@@ -96,6 +95,7 @@ class Installer:
         elif self.pkg_man == "dnf":
             args.append("groupinstall")
             args.append("-y")
+            args.append("--nogpgcheck")
             args.append("--installroot")
             args.append(self.mname)
             args.extend(package_groups)
@@ -121,6 +121,7 @@ class Installer:
                 args.append("module")
                 args.append(mod_cmd)
                 args.append("-y")
+                args.append("--nogpgcheck")
                 args.append("--installroot")
                 args.append(self.mname)
                 args.extend(mod_list)
@@ -171,7 +172,7 @@ class Installer:
         logging.info("\n".join(packages))
         args = [self.cname, '--', 'bash', '-c']
         pkg_cmd =  [self.pkg_man]
-        if self.pkg_man == zypper:
+        if self.pkg_man == "zypper":
           pkg_cmd.append('--gpg-auto-import-keys')
         args.append(" ".join(pkg_cmd + [ 'install', '-y'] + packages))
         cmd(["buildah","run"] + args)
