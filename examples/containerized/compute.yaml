@@ -16,11 +16,17 @@ options:
 
 repos:
   - alias: 'OpenHPC'
-    url: 'https://repos.openhpc.community/OpenHPC/2/EL_8/'
-    gpg: 'https://repos.openhpc.community/OpenHPC/2/EL_8/repodata/repomd.xml.key'
+    config: |
+      baseurl=https://repos.openhpc.community/OpenHPC/2/EL_8/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://repos.openhpc.community/OpenHPC/2/EL_8/repodata/repomd.xml.key'
   - alias: 'OpenHPC-updates'
-    url: 'https://repos.openhpc.community/OpenHPC/2/update.2.9/EL_8/'
-    gpg: 'https://repos.openhpc.community/OpenHPC/2/update.2.9/EL_8/repodata/repomd.xml.key'
+    config: |
+      baseurl=https://repos.openhpc.community/OpenHPC/2/update.2.9/EL_8/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://repos.openhpc.community/OpenHPC/2/update.2.9/EL_8/repodata/repomd.xml.key'
 
 packages:
   - python3

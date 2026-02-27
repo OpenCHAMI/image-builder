@@ -8,20 +8,35 @@ options:
 
 repos:
   - alias: 'Rock_BaseOS'
-    url: 'https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-8'
+    config: |
+      baseurl=https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-8'
   - alias: 'Rock_AppStream'
-    url: 'https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-8'
+    config: |
+      baseurl=https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-8'
   - alias: 'Rock_PowerTools'
-    url: 'https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-8'
+    config: |
+      baseurl=https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-8'
   - alias: 'Epel'
-    url: 'https://dl.fedoraproject.org/pub/epel/8/Everything/x86_64/'
-    gpg: 'https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8'
+    config: |
+      baseurl=https://dl.fedoraproject.org/pub/epel/8/Everything/x86_64/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8'
   - alias: 'elrepo'
-    url: 'http://elrepo.org/linux/elrepo/el8/x86_64/'
-    gpg: 'https://www.elrepo.org/RPM-GPG-KEY-elrepo.org'
+    config: |
+      baseurl=http://elrepo.org/linux/elrepo/el8/x86_64/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://www.elrepo.org/RPM-GPG-KEY-elrepo.org'
 
 package_groups:
   - 'Minimal Install'

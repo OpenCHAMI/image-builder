@@ -10,11 +10,17 @@ options:
 
 repos:
   - alias: 'Rocky_9_BaseOS'
-    url: 'https://dl.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+    config: |
+      baseurl=https://dl.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
   - alias: 'Rocky_9_AppStream'
-    url: 'https://dl.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+    config: |
+      baseurl=https://dl.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
 
 package_groups:
   - 'Minimal Install'

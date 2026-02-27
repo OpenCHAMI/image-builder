@@ -2,6 +2,7 @@ from datetime import datetime
 import pathmod
 import sys
 import os
+
 # written modules
 from image_config import ImageConfig
 from utils import cmd, run_playbook
@@ -17,21 +18,23 @@ class Layer:
         self.image_config = image_config
         self.logger = logging.getLogger(__name__)
 
-    def _build_base(self, repos, modules, packages, package_groups, remove_packages, commands, copyfiles, oscap_options):
+    def _build_base(
+        self,
+        repos,
+        modules,
+        packages,
+        package_groups,
+        remove_packages,
+        commands,
+        copyfiles,
+        oscap_options,
+    ):
         # Set local variables
         dt_string = datetime.now().strftime("%Y%m%d%H%M%S")
         parent = self.args['parent']
         container = self.args['name']
         registry_opts_pull = self.args['registry_opts_pull']
         package_manager = self.args['pkg_man']
-        if 'gpgcheck' in self.args:
-            gpgcheck = self.args['gpgcheck']
-        else:
-            gpgcheck = True
-        if 'proxy' in self.args:
-            proxy = self.args['proxy']
-        else:
-            proxy = ""
 
         # container and mount name
         def buildah_handler(line):
@@ -39,7 +42,12 @@ class Layer:
 
         # Create a new container from parent
         out = []
-        cmd(["buildah", "from"] + registry_opts_pull + ["--name", container + dt_string, parent], stdout_handler = buildah_handler)
+        cmd(
+            ["buildah", "from"]
+            + registry_opts_pull
+            + ["--name", container + dt_string, parent],
+            stdout_handler=buildah_handler,
+        )
         cname = out[0]
 
         # Only mount when doing a scratch install
@@ -54,9 +62,11 @@ class Layer:
         if package_manager == "zypper":
             repo_dest = "/etc/zypp/repos.d"
         elif package_manager == "dnf":
-            repo_dest = os.path.expanduser("~/.pkg_repos/yum.repos.d")
+            repo_dest = os.path.expanduser("/etc/imgbuild/yum.repos.d")
             # Create repo dest, if needed
-            os.makedirs(os.path.join(mname, pathmod.sep_strip(repo_dest)), exist_ok=True)
+            os.makedirs(
+                os.path.join(mname, pathmod.sep_strip(repo_dest)), exist_ok=True
+            )
 
             # Create dnf.conf file, if needed
             os.makedirs(os.path.join(mname, "etc/dnf"), exist_ok=True)
@@ -91,40 +101,40 @@ class Layer:
 
         inst = None
         try:
-            inst = installer.Installer(package_manager, cname, mname, gpgcheck)
+            inst = installer.Installer(package_manager, cname, mname)
         except Exception as e:
             self.logger.error(f"Error preparing installer: {e}")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now ...")
         except KeyboardInterrupt:
             self.logger.error(f"Keyboard Interrupt")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now ...")
 
         # Install Repos
         try:
             if parent == "scratch":
-                inst.install_scratch_repos(repos, repo_dest, proxy)
+                inst.install_scratch_repos(repos, repo_dest)
             else:
-                inst.install_repos(repos, proxy)
+                inst.install_repos(repos, repo_dest)
         except Exception as e:
             self.logger.error(f"Error installing repos: {e}")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now ...")
         except KeyboardInterrupt:
             self.logger.error(f"Keyboard Interrupt")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now ...")
 
         # Install Packages
         try:
             if parent == "scratch":
                 # Enable modules
-                inst.install_scratch_modules(modules, repo_dest, self.args['proxy'])
+                inst.install_scratch_modules(modules)
                 # Base Package Groups
-                inst.install_scratch_package_groups(package_groups, repo_dest, proxy)
+                inst.install_scratch_package_groups(package_groups)
                 # Packages
-                inst.install_scratch_packages(packages, repo_dest, proxy)
+                inst.install_scratch_packages(packages, repo_dest)
             else:
                 inst.install_modules(modules)
                 inst.install_package_groups(package_groups)
@@ -133,11 +143,11 @@ class Layer:
             inst.remove_packages(remove_packages)
         except Exception as e:
             self.logger.error(f"Error installing packages: {e}")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now ...")
         except KeyboardInterrupt:
             self.logger.error(f"Keyboard Interrupt")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now ...")
 
         # Copy Files
@@ -145,30 +155,30 @@ class Layer:
             inst.install_copyfiles(copyfiles)
         except Exception as e:
             self.logger.error(f"Error running commands: {e}")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now")
         except KeyboardInterrupt:
             self.logger.error(f"Keyboard Interrupt")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now ...")
 
         # Run Commands
         try:
             inst.install_commands(commands)
-            if os.path.islink(mname + '/etc/resolv.conf'):
+            if os.path.islink(mname + "/etc/resolv.conf"):
                 self.logger.info("removing resolv.conf link (this link breaks running a container)")
-                os.unlink(mname + '/etc/resolv.conf')
+                os.unlink(mname + "/etc/resolv.conf")
         except Exception as e:
             self.logger.error(f"Error running commands: {e}")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now")
         except KeyboardInterrupt:
             self.logger.error(f"Keyboard Interrupt")
-            cmd(["buildah","rm"] + [cname])
+            cmd(["buildah", "rm"] + [cname])
             sys.exit("Exiting now ...")
-        
-        # OpenSCAP 
-        if self.args['install_scap'] or self.args['scap_benchmark'] or self.args['oval_eval']: 
+
+        # OpenSCAP
+        if self.args["install_scap"] or self.args["scap_benchmark"] or self.args["oval_eval"]:
             oscap = Oscap(oscap_options, self.args, inst)
             if self.args['install_scap']:
                 oscap.install_scap()
@@ -180,35 +190,49 @@ class Layer:
 
         return cname
 
-    def _build_ansible(self, target, parent, ansible_groups, ansible_pb, ansible_inv, ansible_vars, ansible_verbosity):
+    def _build_ansible(
+        self,
+        target,
+        parent,
+        ansible_groups,
+        ansible_pb,
+        ansible_inv,
+        ansible_vars,
+        ansible_verbosity,
+    ):
         cnames = {}
+
         def buildah_handler(line):
             out.append(line)
 
         out = []
-        cmd(["buildah","from"] + self.args['registry_opts_pull'] + ["--name", target, parent], stdout_handler = buildah_handler)
+        cmd(
+            ["buildah", "from"]
+            + self.args["registry_opts_pull"]
+            + ["--name", target, parent],
+            stdout_handler=buildah_handler,
+        )
         container_name = out[0]
 
-        cnames[container_name] = { 
-                'ansible_groups': ansible_groups, 
-                'ansible_pb': ansible_pb, 
-                'ansible_vars': ansible_vars 
-                }
+        cnames[container_name] = {
+            'ansible_groups': ansible_groups,
+            'ansible_pb': ansible_pb,
+            'ansible_vars': ansible_vars,
+        }
 
         try:
             pb_res = run_playbook(cnames, ansible_inv, ansible_verbosity)
         except Exception as e:
             self.logger.error(e)
-            cmd(["buildah","rm"] + [target])
+            cmd(["buildah", "rm"] + [target])
             self.logger.error("Exiting Now...")
             sys.exit(1)
         return container_name
 
     def build_layer(self):
-        print("BUILD LAYER".center(50, '-'))
+        print("BUILD LAYER".center(50, "-"))
 
-        if self.args['layer_type'] == "base":
-            
+        if self.args["layer_type"] == "base":
             repos = self.image_config.get_repos()
             modules = self.image_config.get_modules()
             packages = self.image_config.get_packages()
@@ -218,7 +242,16 @@ class Layer:
             copyfiles = self.image_config.get_copy_files()
             oscap_options = self.image_config.get_oscap_options()
 
-            cname = self._build_base(repos, modules, packages, package_groups, remove_packages, commands, copyfiles, oscap_options)
+            cname = self._build_base(
+                repos,
+                modules,
+                packages,
+                package_groups,
+                remove_packages,
+                commands,
+                copyfiles,
+                oscap_options,
+            )
         elif self.args['layer_type'] == "ansible":
             layer_name = self.args['name']
             print("Layer_Name =", layer_name)
@@ -229,11 +262,19 @@ class Layer:
             ansible_vars = self.args['ansible_vars']
             ansible_verbosity = self.args['ansible_verbosity']
 
-            cname = self._build_ansible(layer_name, parent, ansible_groups, ansible_pb, ansible_inv, ansible_vars, ansible_verbosity)
+            cname = self._build_ansible(
+                layer_name,
+                parent,
+                ansible_groups,
+                ansible_pb,
+                ansible_inv,
+                ansible_vars,
+                ansible_verbosity,
+            )
         else:
             self.logger.error("Unrecognized layer type")
             sys.exit("Exiting now ...")
-        
+
         # Publish the layer
         self.logger.info("Publishing Layer")
         publish(cname, self.args)

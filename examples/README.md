@@ -28,14 +28,23 @@ options:
 
 repos:
   - alias: 'Rock_BaseOS'
-    url: 'https://download.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+    config: |
+      baseurl=https://download.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
   - alias: 'Rock_AppStream'
-    url: 'https://download.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+    config: |
+      baseurl=https://download.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
   - alias: 'Epel'
-    url: 'https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/'
-    gpg: 'https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9'
+    config: |
+      baseurl=https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9'
 
 
 package_groups:
@@ -60,6 +69,19 @@ cmds:
   - cmd: 'dracut --add "dmsquash-live livenet network-manager" --kver $(basename /lib/modules/*) -N -f --logfile /tmp/dracut.log 2>/dev/null'
   - cmd: 'echo DRACUT LOG:; cat /tmp/dracut.log'
 ```
+
+### Repository Configuration
+
+Each repository requires:
+- **`alias`**: Short name for the repo (used for the `.repo` filename)
+- **`config`**: Repository configuration content (will be written to `/etc/imgbuild/yum.repos.d/<alias>.repo`)
+  - Do not include the `[alias]` header - it's added automatically by the code
+  - Must include `baseurl`, typically includes `enabled=1` and `gpgcheck=1`
+- **`gpg_key`** (optional): URL to the GPG key for this repository
+  - If all repos have `gpg_key` defined, keys will be downloaded and imported automatically
+  - Packages will be installed without `--nogpgcheck`
+  - If any repo is missing `gpg_key` or download fails, `--nogpgcheck` will be used with a warning
+  - Works for both scratch and non-scratch installs
 
 We have an example that activates our wireguard tunnel for cloud-init in [rocky-9-base.yaml](/examples/mini-bootcamp/rocky-9-base.yaml).  This is part of the larger tutorial for running an OpenCHAMI system.  You can use the contents of the file above or the included example file in the command below.
 

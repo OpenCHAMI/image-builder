@@ -10,14 +10,23 @@ options:
 
 repos:
   - alias: 'Rock_BaseOS'
-    url: 'https://download.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+    config: |
+      baseurl=https://download.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
   - alias: 'Rock_AppStream'
-    url: 'https://download.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/'
-    gpg: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
+    config: |
+      baseurl=https://download.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-Rocky-9'
   - alias: 'Epel'
-    url: 'https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/'
-    gpg: 'https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9'
+    config: |
+      baseurl=https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
+      enabled=1
+      gpgcheck=1
+    gpg_key: 'https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-9'
 
 
 package_groups:
