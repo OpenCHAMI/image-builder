@@ -27,7 +27,8 @@ def process_args(terminal_args, config_options):
         processed_args['ansible_groups'] = terminal_args.group_list or config_options.get('groups', [])
         processed_args['ansible_pb'] = terminal_args.pb or config_options.get('playbooks', [])
         processed_args['ansible_inv'] = terminal_args.inventory or config_options.get('inventory', [])
-        processed_args['ansible_vars'] = terminal_args.inventory or config_options.get('vars', {})
+        # Config only - we don't have syntax for defining variables arbitrarily from cmdline
+        processed_args['ansible_vars'] = config_options.get('vars', {})
 
         verbosity_values = list(range(0,5))
         if terminal_args.ansible_verbosity in verbosity_values:

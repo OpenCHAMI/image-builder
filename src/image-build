@@ -17,32 +17,57 @@ def main():
     #request.packages.urllib3.disable_warnings()
 
     # Main arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--ansible-verbosity', dest="ansible_verbosity", default=0, type=int, required=False)
-    parser.add_argument('--log-level', dest="log_level", default=DEFAULT_LOGGING, required=False)
-    parser.add_argument('--name', type=str)
-    parser.add_argument('--parent', type=str)
-    parser.add_argument('--proxy', dest="proxy", type=str, required=False)
-    parser.add_argument('--publish-s3', dest="publish_s3", type=str, required=False)
-    parser.add_argument('--publish-registry', dest="publish_registry", type=str, required=False)
-    parser.add_argument('--publish-local', dest="publish_local", action='store_true', required=False)
-    parser.add_argument('--publish-tags', dest="publish_tags", action='store', nargs='+', type=str, default=[])
-    parser.add_argument('--s3-prefix', dest="s3_prefix", type=str, required=False)
-    parser.add_argument('--s3-bucket', dest="s3_bucket", type=str, required=False)
-    parser.add_argument('--registry-opts-pull', dest="registry_opts_pull", type=str, required=False)
-    parser.add_argument('--registry-opts-push', dest="registry_opts_push", type=str, required=False)
-    parser.add_argument('--layer-type', dest="layer_type", type=str, required=False)
-    parser.add_argument('--config', type=str, required=True, help='Configuration file is required')
-    parser.add_argument('--repo', type=str, required=False)
-    parser.add_argument('--pkg-manager', dest="pkg_man", type=str, required=False)
-    parser.add_argument('--gpgcheck', dest="gpgcheck", type=bool, required=False)
-    parser.add_argument('--groups', dest='group_list', action='store', nargs='+', type=str, default=[], help='List of groups')
-    parser.add_argument('--vars', dest='vars', action='store', nargs='+', type=str, default=[], help='List of variables')
-    parser.add_argument('--pb', type=str)
-    parser.add_argument('--inventory', nargs='+', default=[], help='Inventory list')
-    parser.add_argument('--scap-benchmark', dest="scap_benchmark", action='store_true', required=False)
-    parser.add_argument('--oval-eval', dest="oval_eval", action='store_true', required=False)
-    parser.add_argument('--install-scap', dest="install_scap", action='store_true', required=False)
+    parser = argparse.ArgumentParser("See the README.md file or https://github.com/OpenCHAMI/image-builder for full documentation.")
+    parser.add_argument('--ansible-verbosity', dest="ansible_verbosity", default=0, type=int, required=False,
+                        help="Ansible verbosity level, from 0-4.")
+    parser.add_argument('--log-level', dest="log_level", default=DEFAULT_LOGGING, required=False,
+                        choices=list(logging.getLevelNamesMapping().keys()),
+                        help="Set the level at which image builder logs are emitted.")
+    parser.add_argument('--name', type=str,
+                        help="Name of container for buildah to create.")
+    parser.add_argument('--parent', type=str,
+                        help="Parent image to build on top of.")
+    parser.add_argument('--proxy', dest="proxy", type=str, required=False,
+                        help="http/s proxy info - IE https://user:pass@proxy.my.org")
+    parser.add_argument('--publish-s3', dest="publish_s3", type=str, required=False,
+                        help="Publish image artifacts (including a squashFS of the FS to this S3 endpoint.")
+    parser.add_argument('--publish-registry', dest="publish_registry", type=str, required=False,
+                        help="Publish image to this registry.")
+    parser.add_argument('--publish-local', dest="publish_local", action='store_true', required=False,
+                        help="Publish to local buildah images.")
+    parser.add_argument('--publish-tags', dest="publish_tags", action='store', nargs='+', 
+                        type=str, default=[],
+                        help="Publish the given tag/s.")
+    parser.add_argument('--s3-prefix', dest="s3_prefix", type=str, required=False,
+                        help="S3 destination prefix")
+    parser.add_argument('--s3-bucket', dest="s3_bucket", type=str, required=False,
+                        help="S3 bucket name.")
+    parser.add_argument('--registry-opts-pull', dest="registry_opts_pull", type=str, required=False,
+                        help="Additional options to pass Buildah when pulling from the registry.")
+    parser.add_argument('--registry-opts-push', dest="registry_opts_push", type=str, required=False,
+                        help="Additional options to pass Buildah when pushing to the registry.")
+    parser.add_argument('--layer-type', dest="layer_type", type=str, required=False,
+                        choices=['base', 'ansible'],
+                        help="Whether this is a base layer or an additional, Ansible configured layer.")
+    parser.add_argument('--config', type=str, required=True,
+                        help="The image configuration file (required). See README.md for more info on formatting.")
+    parser.add_argument('--pkg-manager', dest="pkg_man", type=str, required=False,
+                        choices=['dnf', 'zypper'],
+                        help="Package manager to use to install configured packages.")
+    parser.add_argument('--gpgcheck', dest="gpgcheck", type=bool, required=False,
+                        help="Whether to check gpg signatures when installing packages.")
+    parser.add_argument('--groups', dest='group_list', action='store', nargs='+', type=str, default=[],
+                        help='List of Ansible groups to assign to the image when running Ansible.')
+    parser.add_argument('--playbook', '--pb', type=str,
+                        help="Ansible playbook to run.")
+    parser.add_argument('--inventory', nargs='+', default=[], 
+                        help='Ansible inventory file paths.')
+    parser.add_argument('--scap-benchmark', dest="scap_benchmark", action='store_true', required=False,
+                        help="Whether to run scap checks.")
+    parser.add_argument('--oval-eval', dest="oval_eval", action='store_true', required=False,
+                        help="Whether to run vulnerability assessment evaluation.")
+    parser.add_argument('--install-scap', dest="install_scap", action='store_true', required=False,
+                        help="Whether to install scap at all.")
 
 
     try:
