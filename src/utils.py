@@ -56,6 +56,8 @@ def cmd(
     **kwargs,
 ):
     with Popen(args, text=text, stdout=stdout, stderr=stderr, **kwargs) as process:
+        # Continually pull from the output handles of the given process so we never get stuck
+        # on a full pipe (the running process would error out or hang).
         with ThreadPoolExecutor(2) as pool:  # two threads to handle the streams
             exhaust = partial(pool.submit, partial(deque, maxlen=0))
             exhaust(stdout_handler(line[:-1]) for line in process.stdout)
