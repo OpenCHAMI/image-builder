@@ -10,27 +10,25 @@ RUN dnf install -y \
         buildah \
         python3.11 \
         python3.11-pip \
-        fuse-overlayfs \
         tar \
         squashfs-tools \
-	fuse-overlayfs
+        fuse-overlayfs
 
 # Ensure python3 shebang uses Python 3.11
 RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
     alternatives --set python3 /usr/bin/python3.11
 
 COPY requirements.txt /
-RUN pip3.11 install -r /requirements.txt
+RUN pip3.11 install --root-user-action=ignore -r /requirements.txt
 
 COPY src/ /usr/local/bin/
 RUN chmod -R 0755 /usr/local/bin/
 
 # Allow non-root to run buildah commands
 RUN setcap cap_setuid=ep "$(command -v newuidmap)" && \
-    setcap cap_setgid=ep "$(command -v newgidmap)" &&\
+    setcap cap_setgid=ep "$(command -v newgidmap)" && \
     chmod 0755 "$(command -v newuidmap)" && \
     chmod 0755 "$(command -v newgidmap)" && \
-    rpm --restore shadow-utils && \
     echo "builder:2000:50000" > /etc/subuid && \
     echo "builder:2000:50000" > /etc/subgid
 
