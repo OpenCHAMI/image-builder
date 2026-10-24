@@ -13,7 +13,7 @@ RUN dnf install -y \
         fuse-overlayfs \
         tar \
         squashfs-tools \
-	fuse-overlayfs
+        fuse-overlayfs
 
 # Ensure python3 shebang uses Python 3.11
 RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
