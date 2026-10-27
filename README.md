@@ -150,6 +150,13 @@ cmds:
 # 'cmd' also supports 'buildah_extra_args' that are passed to 'buildah run'
   - cmd: 'id user'
     buildah_extra_args: ['--volume', '/var/lib/sss:/var/lib/sss:z']
+# 'cmd' supports 'script: True' to pass the string as a bash script to 'buildah run'
+  - cmd: |
+      long
+      command
+      script
+      steps
+    script: true
 
 # OpenSCAP options to use with scap_benchmark or oval_eval. Each OpenSCAP 
 # command gets passed to the shell. By default, the results from OpenSCAP will be saved 
